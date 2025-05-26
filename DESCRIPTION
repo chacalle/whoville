@@ -17,7 +17,7 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     dplyr,
     stringdist,
-    rlang
+    rlang (>= 1.1.0)
 Suggests: 
     knitr,
     rmarkdown
