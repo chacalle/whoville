@@ -3,6 +3,7 @@
 export(codes_to_iso3)
 export(country_code_types)
 export(gbd_high_income_states)
+export(get_who_public_xmart)
 export(is_gbd_high_income)
 export(is_oecd_member)
 export(is_un_ldc)
