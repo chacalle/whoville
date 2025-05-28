@@ -38,7 +38,7 @@ names_to_code <- function(names,
                           p = 0.1) {
   rlang::arg_match(type, country_code_types())
   language <- rlang::arg_match(language)
-  assert_logical(ignore_case)
+  check_bool(ignore_case)
   fuzzy_matching <- assert_fuzzy_matching(fuzzy_matching)
   rlang::arg_match(method, c("osa", "lv", "dl", "hamming", "lcs", "qgram", "cosine", "jaccard", "jw", "soundex"))
   assert_p(p)

@@ -41,3 +41,37 @@ test_that("`get_oecd_countries` works", {
 
   testthat::expect_identical(expected, result)
 })
+
+test_that("`get_wb_ig` works", {
+  testthat::skip_if_offline()
+
+  expected_wb_ig <- whoville::countries %>%
+    dplyr::select(iso3, starts_with("wb_ig"))
+  expected_iso3 <- expected_wb_ig$iso3[rowSums(!is.na(expected_wb_ig)) > 1]
+  expected_wb_ig <- expected_wb_ig %>%
+    filter(iso3 %in% expected_iso3) %>%
+    arrange(iso3)
+
+  wb_ig <- get_wb_ig() %>%
+    format_wb_ig() %>%
+    # drop former countries that are not stored in the countries object
+    filter(iso3 %in% whoville::countries$iso3) %>%
+    arrange(iso3)
+  testthat::expect_identical(wb_ig, expected_wb_ig)
+})
+
+test_that("`get_wb_reg` works", {
+  testthat::skip_if_offline()
+
+  expected_wb_reg <- whoville::countries %>%
+    dplyr::select(iso3, wb_region, wb_region_name_en) %>%
+    filter(!is.na(wb_region)) %>%
+    arrange(iso3)
+
+  wb_reg <-  get_wb_reg() %>%
+    format_wb_reg() %>%
+    # drop countries (Channel Islands) that are not stored in the countries object
+    filter(iso3 %in% whoville::countries$iso3) %>%
+    arrange(iso3)
+  testthat::expect_identical(wb_reg, expected_wb_reg)
+})

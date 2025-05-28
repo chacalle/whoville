@@ -29,7 +29,7 @@ iso3_to_regions <- function(iso3,
   region <- rlang::arg_match(region)
 
   if (region == "wb_ig") {
-    assert_wb_ig_years(year)
+    check_number_whole(year, min = min(wb_ig_years()), max = max(wb_ig_years()))
     mtch <- paste(region, year, sep = "_")
   } else if (region %in% c("un_region", "un_subregion", "un_intermediate_region", "sdg_region", "sdg_subregion", "gbd_region", "gbd_subregion", "un_desa_region", "un_desa_subregion", "wb_region") && name) {
     language <- rlang::arg_match(language)

@@ -22,6 +22,7 @@ Imports:
 Suggests:
     httr2,
     knitr,
+    readxl,
     rmarkdown,
     rvest,
     testthat (>= 3.0.0)
