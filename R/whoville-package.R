@@ -1,8 +1,10 @@
 #' @keywords internal
 "_PACKAGE"
 
+#' @import rlang
+NULL
+
 ## usethis namespace: start
-#' @importFrom rlang is_string
 #' @importFrom magrittr %>%
 ## usethis namespace: end
 NULL
