@@ -29,3 +29,15 @@ test_that("`format_who_xmart_ref_country` works", {
 
   testthat::expect_identical(expected, result)
 })
+
+test_that("`get_oecd_countries` works", {
+  testthat::skip_if_offline()
+
+  result <- get_oecd_countries() %>%
+    format_oecd_countries()
+
+  expected <- whoville::countries %>%
+    select(names(result))
+
+  testthat::expect_identical(expected, result)
+})

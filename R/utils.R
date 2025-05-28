@@ -68,3 +68,13 @@ assert_logical <- function(x) {
     )
   }
 }
+
+#' @noRd
+assert_no_nas <- function(df) {
+  df_nas <- df[!(stats::complete.cases(df)),]
+  if (nrow(df_nas) > 0) {
+    print(df_nas)
+    stop("NAs detected")
+  }
+  return(df)
+}
