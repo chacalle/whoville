@@ -16,6 +16,7 @@ RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Imports: 
     dplyr,
+    magrittr,
     stringdist,
     rlang (>= 1.1.0)
 Suggests: 
