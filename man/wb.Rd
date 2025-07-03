@@ -8,16 +8,14 @@
 \title{Get/Format the World Bank Income Group and Region country classifications.}
 \usage{
 get_wb_ig(
-  url =
-    "https://datacatalogapi.worldbank.org/ddhxext/ResourceDownload?resource_unique_id=DR0090754",
+  url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
   sheet = "Country Analytical History",
   skip_years = 5,
   skip_data = 10
 )
 
 get_wb_reg(
-  url =
-    "https://datacatalogapi.worldbank.org/ddhxext/ResourceDownload?resource_unique_id=DR0090755",
+  url = "https://ddh-openapi.worldbank.org/resources/DR0095333/download",
   sheet = "List of economies"
 )
 

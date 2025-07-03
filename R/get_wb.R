@@ -54,7 +54,7 @@ wb_ig_years <- function() {
 #' }
 #'
 #' @rdname wb
-get_wb_ig <- function(url = "https://datacatalogapi.worldbank.org/ddhxext/ResourceDownload?resource_unique_id=DR0090754",
+get_wb_ig <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
                       sheet = "Country Analytical History",
                       skip_years = 5,
                       skip_data = 10) {
@@ -103,7 +103,7 @@ get_wb_ig <- function(url = "https://datacatalogapi.worldbank.org/ddhxext/Resour
 }
 
 #' @rdname wb
-get_wb_reg <- function(url = "https://datacatalogapi.worldbank.org/ddhxext/ResourceDownload?resource_unique_id=DR0090755",
+get_wb_reg <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095333/download",
                        sheet = "List of economies") {
 
   temp <- tempfile(fileext = ".xlsx")
