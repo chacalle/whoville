@@ -18,13 +18,17 @@ Imports:
     dplyr,
     magrittr,
     stringdist,
-    rlang (>= 1.1.0)
+    rlang (>= 1.1.0),
+    stringi,
+    stringr,
+    zip
 Suggests:
     httr2,
     knitr,
     readxl,
     rmarkdown,
     rvest,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    zip
 VignetteBuilder: knitr
 Config/testthat/edition: 3
