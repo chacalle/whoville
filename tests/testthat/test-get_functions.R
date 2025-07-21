@@ -74,3 +74,13 @@ test_that("`get_wb_reg` works", {
     arrange(iso3)
   testthat::expect_identical(wb_reg, expected_wb_reg)
 })
+
+test_that("`get_un_m49` works", {
+  testthat::skip_if_offline()
+
+  testthat::expect_no_error(
+    get_un_m49() %>%
+      format_un_m49()
+  )
+})
+
