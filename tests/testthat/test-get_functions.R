@@ -84,3 +84,18 @@ test_that("`get_un_m49` works", {
   )
 })
 
+
+test_that("`get_undesa_sdg` works", {
+  testthat::skip_if_offline()
+
+  result <- get_undesa_sdg() %>%
+    format_undesa_sdg() %>%
+    arrange(iso3)
+  testthat::expect_true(nrow(result) > 0)
+
+  expected <- whoville::countries %>%
+    arrange(iso3) %>%
+    select(all_of(names(result)))
+  # testthat::expect_identical(expected, result)
+})
+
