@@ -13,7 +13,7 @@ Provides a collated dataset with official country names and codes from the World
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/gpw13/ghost}
+  \item \url{https://github.com/gpw13/whoville}
 }
 
 }
