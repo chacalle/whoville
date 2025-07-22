@@ -15,5 +15,4 @@ available in the \code{countries} data frame.
 }
 \examples{
 country_code_types()
-
 }

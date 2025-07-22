@@ -115,7 +115,6 @@
 #'   \item{wb_ig_2018}{World Bank Income Group code, 2018 (FY 2020) classification.}
 #'   \item{wb_ig_2019}{World Bank Income Group code, 2019 (FY 2021) classification.}
 #'   \item{wb_ig_2020}{World Bank Income Group code, 2020 (FY 2022) classification.}
-#'   \item{wb_ig_202``}{World Bank Income Group code, 2021 (FY 2023) classification.}
 #' }
 #' @source \href{https://portal-uat.who.int/xmart4/REFMART}{World Health Organization country reference table, accessed July 4 2022.}
 #' @source \href{https://unstats.un.org/unsd/methodology/m49/overview/}{United Nations Statistics Division, Country or Area Codes for Statistical Use tables; accessed August 15 2020.}
