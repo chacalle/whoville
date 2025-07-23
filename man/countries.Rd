@@ -5,7 +5,7 @@
 \alias{countries}
 \title{Country metadata from the WHO, UN, and WB.}
 \format{
-A data frame with 249 rows and 109 variables:
+A data frame with 249 rows and 112 variables:
 \describe{
 \item{iso3}{\href{https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3}{ISO3 code.}}
 \item{iso2}{\href{https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2}{ISO2 code.}}
@@ -17,7 +17,6 @@ A data frame with 249 rows and 109 variables:
 \item{who_member}{Logical, is country a WHO member state?}
 \item{who_member_small}{Logical, is country a WHO member state with population <= 90,000?}
 \item{oecd_member}{Logical, is country an OECD member state?}
-\item{gbd_high_income}{Logical, is the country classified as high-income in the IHME's GBD 2019?}
 \item{un_ldc}{Logical, is the country classified as a least-developed country by the United Nations?}
 \item{un_lldc}{Logical, is the country classified as a land-locked developing country by the United Nations?}
 \item{un_sids}{Logical, is the country classified as a small island developing state by the United Nations?}
@@ -116,6 +115,10 @@ A data frame with 249 rows and 109 variables:
 \item{wb_ig_2018}{World Bank Income Group code, 2018 (FY 2020) classification.}
 \item{wb_ig_2019}{World Bank Income Group code, 2019 (FY 2021) classification.}
 \item{wb_ig_2020}{World Bank Income Group code, 2020 (FY 2022) classification.}
+\item{wb_ig_2021}{World Bank Income Group code, 2021 (FY 2023) classification.}
+\item{wb_ig_2022}{World Bank Income Group code, 2022 (FY 2024) classification.}
+\item{wb_ig_2023}{World Bank Income Group code, 2023 (FY 2025) classification.}
+\item{wb_ig_2024}{World Bank Income Group code, 2024 (FY 2026) classification.}
 }
 }
 \source{

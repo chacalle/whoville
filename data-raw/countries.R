@@ -1,123 +1,63 @@
-library(tidyverse)
+# Description: Create the `whoville::countries` object and compare to the
+# previous version. The final saving section must be manually run after
+# reviewing the summarized changes.
+
+library(daff)
+library(openxlsx2)
 library(readxl)
-library(wppdistro)
-library(xmart4)
+library(tidyverse)
 
-# Adding in WHO data
+# save current version of the countries object before loading the
+# potentially updated package contents
+countries_current <- whoville::countries
 
-xmart_c <- xmart4_table("REFMART", "REF_COUNTRY") %>%
-  transmute(
-    iso3 = CODE_ISO_3,
-    iso2 = CODE_ISO_2,
-    iso_numeric = CODE_ISO_NUMERIC,
-    who_code = CODE_WHO,
-    who_short_name_en = NAME_SHORT_EN,
-    who_formal_name_en = NAME_FORMAL_EN,
-    who_short_name_ar = NAME_SHORT_AR,
-    who_formal_name_ar = NAME_FORMAL_AR,
-    who_short_name_es = NAME_SHORT_ES,
-    who_formal_name_es = NAME_FORMAL_ES,
-    who_short_name_fr = NAME_SHORT_FR,
-    who_formal_name_fr = NAME_FORMAL_FR,
-    who_short_name_ru = NAME_SHORT_RU,
-    who_formal_name_ru = NAME_FORMAL_RU,
-    who_short_name_zh = NAME_SHORT_ZH,
-    who_formal_name_zh = NAME_FORMAL_ZH,
-    who_member = WHO_LEGAL_STATUS %in% "M",
-    sovereign_iso3 = SOVEREIGN_ISO_3,
-    who_region = GRP_WHO_REGION
-  )
+devtools::load_all()
 
-# Download and read the World Bank historical income groups classifications
-temp <- tempfile(fileext = ".xlsx")
-url <- "http://databank.worldbank.org/data/download/site-content/OGHIST.xlsx"
-download.file(url, temp, mode = "wb")
 
-wb_ig <- readxl::read_xlsx(temp,
-  sheet = "Country Analytical History",
-  skip = 10,
-  col_names = c("iso3", "name", 1987:2021),
-  na = ".."
+# Get WHO Country List ----------------------------------------------------
+
+dat_who_ref_country <- get_who_public_xmart(
+  url = "https://xmart-api-public.who.int/REFMART/REF_COUNTRY"
 ) %>%
-  transmute(
-    iso3 = iso3,
-    across(matches("[0-9]{4}"),
-      ~ case_when(
-        .x %in% c("L", "H") ~ paste0(.x, "IC"),
-        .x %in% c("LM", "UM") ~ paste0(.x, "C")
-      ),
-      .names = "wb_ig_{.col}"
-    )
-  )
+  format_who_xmart_ref_country()
 
-# WB region data
 
-temp <- tempfile(fileext = ".xls")
-url <- "http://databank.worldbank.org/data/download/site-content/CLASS.xlsxx"
-download.file(url, temp, mode = "wb")
+# Get World Bank Definitions ----------------------------------------------
 
-wb_reg <- readxl::read_xlsxx(temp,
-  sheet = "List of economies",
-  na = ".."
-) %>%
-  rename(iso3 = "Code", wb_region = "Region") %>%
-  select(iso3, wb_region) %>%
-  mutate(wb_region_name_en = wb_region)
+dat_wb_ig <- get_wb_ig() %>%
+  format_wb_ig()
+dat_wb_reg <- get_wb_reg() %>%
+  format_wb_reg()
 
-# Adding UN data
 
-un_c <- read_excel("data-raw/un_countries.xlsx",
-  "english",
-  col_types = "text"
-) %>%
-  transmute(
-    iso3 = `ISO-alpha3 Code`,
-    m49 = `M49 Code`,
-    un_ldc = !is.na(`Least Developed Countries (LDC)`),
-    un_lldc = !is.na(`Land Locked Developing Countries (LLDC)`),
-    un_sids = !is.na(`Small Island Developing States (SIDS)`),
-    un_name_en = `Country or Area`,
-    un_region = `Region Code`,
-    un_region_name_en = `Region Name`,
-    un_subregion = `Sub-region Code`,
-    un_subregion_name_en = `Sub-region Name`,
-    un_intermediate_region = `Intermediate Region Code`,
-    un_intermediate_region_name_en = `Intermediate Region Name`
-  ) %>%
-  mutate(
-    un_intermediate_region = ifelse(is.na(un_intermediate_region),
-      un_subregion,
-      un_intermediate_region
-    ),
-    un_intermediate_region_name_en = ifelse(is.na(un_intermediate_region_name_en),
-      un_subregion_name_en,
-      un_intermediate_region_name_en
-    )
-  )
+# Get UNSD M49 Definitions ------------------------------------------------
 
-# Pulling in names in different languages
+dat_unsd_m49 <- get_un_m49() %>%
+  format_un_m49()
 
-ln_codes <- c("ru", "fr", "es", "ar", "zh")
-ln_names <- c("russian", "french", "spanish", "arabic", "chinese")
 
-for (i in 1:5) {
-  df <- read_excel("data-raw/un_countries.xlsx",
-    ln_names[i],
-    col_types = "text"
-  ) %>%
-    select(
-      m49 = `M49 Code`,
-      !!sym(paste0("un_name_", ln_codes[i])) := `Country or Area`,
-      !!sym(paste0("un_region_name_", ln_codes[i])) := `Region Name`,
-      !!sym(paste0("un_subregion_name_", ln_codes[i])) := `Sub-region Name`,
-      !!sym(paste0("un_intermediate_region_name_", ln_codes[i])) := `Intermediate Region Name`
-    )
-  un_c <- left_join(un_c, df, by = "m49")
-}
+# Get UN DESA & SDG Regions -----------------------------------------------
 
-# Pulling in IHME countries and former country names
+dat_undesa_sdg <- get_undesa_sdg() %>%
+  format_undesa_sdg()
 
-alt_c <- read_excel("data-raw/alt_countries.xlsx") %>%
+
+# Get IHME GBD Definitions ------------------------------------------------
+
+# TODO: automatically check if a more recent GBD year is available
+dat_gbd <- get_gbd("2021") %>%
+  format_gbd()
+
+
+# Get OECD Members --------------------------------------------------------
+
+oecd <- get_oecd_countries()
+
+
+# Get alternate and former country names ----------------------------------
+
+# TODO: where did this file come from?
+alt_c <- readxl::read_excel("data-raw/alt_countries.xlsx") %>%
   select(iso3,
     alt_name_en = altname,
     alt_name_2_en = altname2,
@@ -128,195 +68,165 @@ alt_c <- read_excel("data-raw/alt_countries.xlsx") %>%
     former_name_2_en = formername2
   )
 
-# Adding in SDG regions and subregions
 
-temp <- tempfile(fileext = ".xlsx")
-url <- "https://www.un.org/development/desa/pd/sites/www.un.org.development.desa.pd/files/aggregates_correspondence_table_2020_1.xlsx"
-download.file(url, temp, mode = "wb")
+# Merge all together ------------------------------------------------------
 
-sdg_reg <- readxl::read_xlsx(temp,
-  sheet = "Annex",
-  skip = 11,
-  col_types = c(
-    rep("skip", 3), "text", rep("skip", 4),
-    rep("text", 8), rep("skip", 13)
-  ),
-  col_names = c(
-    "iso3",
-    "un_desa_subregion",
-    "un_desa_subregion_name_en",
-    "sdg_subregion",
-    "sdg_subregion_name_en",
-    "sdg_region",
-    "sdg_region_name_en",
-    "un_desa_region",
-    "un_desa_region_name_en"
-  )
-) %>%
-  mutate(
-    sdg_subregion = ifelse(is.na(sdg_subregion),
-      sdg_region,
-      sdg_subregion
-    ),
-    sdg_subregion_name_en = ifelse(is.na(sdg_subregion_name_en),
-      sdg_region_name_en,
-      sdg_subregion_name_en
-    )
-  ) %>%
-  filter(!is.na(iso3))
-
-# Add in GBD regions and codes from IHME
-
-temp_z <- tempfile()
-download.file(
-  "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2019_CODEBOOK.zip",
-  temp_z
+languages <- c("en", "ru", "fr", "es", "ar", "zh")
+who_names <- as.vector(outer(c("who_short_name_", "who_formal_name_"), languages, paste0))
+un_regions <- c("un_region", "un_subregion", "un_intermediate_region")
+un_region_names <- as.vector(outer(paste0(un_regions, "_name_"), languages, paste0))
+regions_others <- c(
+  "un_desa_region", "un_desa_subregion",
+  "sdg_region", "sdg_subregion",
+  "gbd_region", "gbd_subregion",
+  "wb_region"
 )
-gbd_heirarchy <- readxl::read_excel(unzip(temp_z, "IHME_GBD_2019_GBD_LOCATION_HIERARCHY_Y2022M06D29.XLSX")) %>%
-  rename(`Location Name` = "Location Nam")
+regions_others <- as.vector(t(outer(regions_others, c("", "_name_en"), paste0)))
 
-gbd_iso3 <- gbd_heirarchy %>%
-  mutate(
-    iso3 = names_to_iso3(`Location Name`,
-      fuzzy_matching = "no"
-    ),
-    iso3 = ifelse(`Location ID` == 533, # US state of Georgia
-      NA,
-      iso3
-    )
-  ) %>%
-  filter(!is.na(iso3)) %>%
-  select(iso3, gbd_code = `Location ID`, gbd_subregion = `Parent ID`)
-
-gbd_df <- gbd_iso3 %>%
-  left_join(gbd_heirarchy,
-    by = c("gbd_subregion" = "Location ID")
-  ) %>%
-  select(iso3,
-    gbd_code,
-    gbd_subregion,
-    gbd_subregion_name_en = `Location Name`,
-    gbd_region = `Parent ID`
-  ) %>%
-  left_join(gbd_heirarchy,
-    by = c("gbd_region" = "Location ID")
-  ) %>%
-  select(iso3,
-    gbd_code,
-    gbd_subregion,
-    gbd_subregion_name_en,
-    gbd_region,
-    gbd_region_name_en = `Location Name`
-  )
-
-# Merging together
-
-countries <- left_join(xmart_c, un_c, by = "iso3") %>%
+countries_new <- dat_who_ref_country %>%
+  left_join(dat_wb_ig, by = "iso3") %>%
+  left_join(dat_wb_reg, by = "iso3") %>%
+  left_join(dat_unsd_m49, by = c("m49", "iso3", "iso2")) %>%
+  left_join(dat_undesa_sdg, by = "iso3") %>%
+  left_join(dat_gbd, by = "iso3") %>%
+  left_join(oecd, by = "iso3") %>%
   left_join(alt_c, by = "iso3") %>%
-  left_join(wb_ig, by = "iso3") %>%
-  left_join(wb_reg, by = "iso3") %>%
-  left_join(sdg_reg, by = "iso3") %>%
-  left_join(gbd_df, by = "iso3") %>%
   select(
     iso3,
-    iso2:who_code,
+    iso2,
+    iso_numeric,
+    who_code,
     m49,
     gbd_code,
     sovereign_iso3,
     who_member,
+    who_member_small,
+    oecd_member,
     un_ldc,
     un_lldc,
     un_sids,
-    who_short_name_en:who_formal_name_zh,
-    un_name_en,
-    un_name_ru,
-    un_name_fr,
-    un_name_es,
-    un_name_ar,
-    un_name_zh,
-    alt_name_en:former_name_2_en,
+    all_of(who_names),
+    all_of(paste0("un_name_", languages)),
+    starts_with("alt_name"),
+    starts_with("former_name"),
     who_region,
-    un_region,
-    un_subregion,
-    un_intermediate_region,
-    un_region_name_en,
-    un_subregion_name_en,
-    un_intermediate_region_name_en,
-    un_region_name_ru,
-    un_subregion_name_ru,
-    un_intermediate_region_name_ru,
-    un_region_name_fr,
-    un_subregion_name_fr,
-    un_intermediate_region_name_fr,
-    un_region_name_es,
-    un_subregion_name_es,
-    un_intermediate_region_name_es,
-    un_region_name_ar,
-    un_subregion_name_ar,
-    un_intermediate_region_name_ar,
-    un_region_name_zh,
-    un_subregion_name_zh,
-    un_intermediate_region_name_zh,
-    un_desa_region,
-    un_desa_region_name_en,
-    un_desa_subregion,
-    un_desa_subregion_name_en,
-    sdg_region,
-    sdg_region_name_en,
-    sdg_subregion,
-    sdg_subregion_name_en,
-    gbd_region,
-    gbd_region_name_en,
-    gbd_subregion,
-    gbd_subregion_name_en,
-    wb_region,
-    wb_region_name_en,
-    wb_ig_1987:wb_ig_2020
+    all_of(un_regions),
+    all_of(un_region_names),
+    all_of(regions_others),
+    starts_with("wb_ig_")
   )
 
-# Getting small member states information
 
-small_countries <- wpp_population %>%
-  filter(
-    year == 2018,
-    sex == "both",
-    total < 90000
-  ) %>%
-  pull(iso3)
+# Compare with currently saved `countries` object -------------------------
 
-who_member_small <- countries$iso3 %in% small_countries
+cols_intersect <- intersect(names(countries_current), names(countries_new))
+cols_dropped <- setdiff(names(countries_current), cols_intersect)
+cols_added <- setdiff(names(countries_new), cols_intersect)
 
-countries <- countries %>%
-  add_column(who_member_small,
-    .after = "who_member"
+check_countries <- countries_current %>%
+  arrange(iso3)
+check_countries_new <- countries_new %>%
+  arrange(iso3)
+
+cols_identical <- map_lgl(names(check_countries), function(col) {
+  identical(check_countries[[col]], check_countries_new[[col]])
+})
+cols_changed <- names(check_countries)[!cols_identical]
+cols_identical <- names(check_countries)[cols_identical]
+
+countries_diff <- daff::diff_data(
+  data_ref = check_countries,
+  data = check_countries_new,
+  ids = c("iso3"),
+  show_unchanged = FALSE
+)
+
+
+# Render the data diff to html
+# daff::render_diff(
+#   diff = countries_diff,
+#   title = "Comparison of current and new `whoville::countries` object"
+# )
+
+dat_diff <- countries_diff$get_data()
+
+header_row <- dat_diff[2, ] %>%
+  as.character()
+highlight_changed_cols <- which(header_row %in% setdiff(cols_changed, c(cols_added, cols_dropped)))
+dat_diff[1, highlight_changed_cols] <- "->"
+
+wb_diff <- openxlsx2::wb_workbook() %>%
+  openxlsx2::wb_add_worksheet(sheet = "`countries` diff") %>%
+  openxlsx2::wb_add_data(sheet = "`countries` diff", dat_diff) %>%
+  # bold header row
+  openxlsx2::wb_add_font(bold = TRUE, dims = openxlsx2::wb_dims(rows = 3, cols = 1:ncol(dat_diff))) %>%
+  openxlsx2::wb_set_col_widths(cols = 1:ncol(dat_diff), widths = 15) %>%
+  openxlsx2::wb_add_ignore_error(number_stored_as_text = TRUE, dims = openxlsx2::wb_dims(x = dat_diff)) %>%
+  openxlsx2::wb_add_dxfs_style(name = "modifiedStyle", bg_fill = openxlsx2::wb_color(hex = "#6b64ff")) %>%
+  openxlsx2::wb_add_conditional_formatting(
+    "`countries` diff",
+    dims = openxlsx2::wb_dims(x = dat_diff),
+    rule = "->",
+    type = "containsText",
+    style = "modifiedStyle"
   )
 
-# Adding in OECD data
-# From World Bank link with ISO3 codes of all member states
+highlight_rows_columns <- function(wb,
+                                   x,
+                                   dimension = c("rows", "columns"),
+                                   change_type = c("added", "removed")) {
 
-oecd <- readxl::read_excel("data-raw/oecd.xlsx")
-oecd_member <- countries$iso3 %in% oecd$ISO3
+  search_string <- if_else(change_type == "added", "\\+\\+\\+", "\\-\\-\\-")
+  hex_color <- if_else(change_type == "added", "#72ff6d", "#fd676c")
 
-countries <- countries %>%
-  add_column(oecd_member,
-    .after = "who_member_small"
-  )
+  check_vector <- if (dimension == "rows") {
+    check_vector <- dat_diff[, 2]
+  } else {
+    check_vector <- dat_diff[1, ]
+  }
 
-# Adding in high-income GBD countries
-# File edited to just have the high-income countries
+  # identify the indices matching the search string
+  i <- check_vector %>%
+    as.vector() %>%
+    grepl(pattern = search_string) %>%
+    which()
+  if (length(i) == 0) {
+    return(wb)
+  }
 
-gbd <- readxl::read_excel("data-raw/gbd_sdi.xlsx",
-  skip = 1
-) %>%
-  transmute(iso3 = whoville::names_to_iso3(Location))
+  # identify workbook dimensions to highlight
+  if (dimension == "rows") {
+    dims_highlight <- openxlsx2::wb_dims(rows = i, cols = 1:(ncol(x) + 1))
+  } else {
+    dims_highlight <- openxlsx2::wb_dims(rows = 1:(nrow(x) + 1), cols = i)
+  }
 
-gbd_high_income <- countries$iso3 %in% gbd$iso3
+  wb <- wb %>%
+    # highlight rows/columns added/removed
+    openxlsx2::wb_add_fill(
+      dims = dims_highlight,
+      color = openxlsx2::wb_color(hex = hex_color)
+    )
+  return(wb)
+}
 
-countries <- countries %>%
-  add_column(gbd_high_income,
-    .after = "oecd_member"
-  )
+wb_diff <- highlight_rows_columns(wb_diff, dat_diff, "rows", "added") %>%
+  highlight_rows_columns(dat_diff, "rows", "removed") %>%
+  highlight_rows_columns(dat_diff, "columns", "added") %>%
+  highlight_rows_columns(dat_diff, "columns", "removed")
 
-# Writing out result
+wb_diff <- wb_diff %>%
+  openxlsx2::wb_freeze_pane(first_active_row = 4, first_active_col = 4) %>%
+  openxlsx2::wb_add_filter(rows = 3, cols = 1:ncol(dat_diff))
 
-usethis::use_data(countries, overwrite = TRUE)
+dir.create(tempdir())
+openxlsx2::wb_save(wb_diff, stringr::str_glue("{here::here()}/data-raw/countries_diff.xlsx"))
+
+
+# Save new `countries` object ---------------------------------------------
+
+# Manually run the final two lines when satisfied with the changes summarized above
+if (FALSE) {
+  countries <- countries_new
+  usethis::use_data(countries, overwrite = TRUE)
+}
