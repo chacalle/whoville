@@ -4,118 +4,14 @@
 
 library(daff)
 library(openxlsx2)
-library(readxl)
 library(tidyverse)
-
-# save current version of the countries object before loading the
-# potentially updated package contents
-countries_current <- whoville::countries
 
 devtools::load_all()
 
+# save current version of the countries object
+countries_current <- countries
 
-# Get WHO Country List ----------------------------------------------------
-
-dat_who_ref_country <- get_who_public_xmart(
-  url = "https://xmart-api-public.who.int/REFMART/REF_COUNTRY"
-) %>%
-  format_who_xmart_ref_country()
-
-
-# Get World Bank Definitions ----------------------------------------------
-
-dat_wb_ig <- get_wb_ig() %>%
-  format_wb_ig()
-dat_wb_reg <- get_wb_reg() %>%
-  format_wb_reg()
-
-
-# Get UNSD M49 Definitions ------------------------------------------------
-
-dat_unsd_m49 <- get_un_m49() %>%
-  format_un_m49()
-
-
-# Get UN DESA & SDG Regions -----------------------------------------------
-
-dat_undesa_sdg <- get_undesa_sdg() %>%
-  format_undesa_sdg()
-
-
-# Get IHME GBD Definitions ------------------------------------------------
-
-# TODO: automatically check if a more recent GBD year is available
-dat_gbd <- get_gbd("2021") %>%
-  format_gbd()
-
-
-# Get OECD Members --------------------------------------------------------
-
-oecd <- get_oecd_countries()
-
-
-# Get alternate and former country names ----------------------------------
-
-# TODO: where did this file come from?
-alt_c <- readxl::read_excel("data-raw/alt_countries.xlsx") %>%
-  select(iso3,
-    alt_name_en = altname,
-    alt_name_2_en = altname2,
-    alt_name_3_en = altname3,
-    alt_name_4_en = altname4,
-    alt_name_5_en = altname5,
-    former_name_en = formername,
-    former_name_2_en = formername2
-  )
-
-
-# Merge all together ------------------------------------------------------
-
-languages <- c("en", "ru", "fr", "es", "ar", "zh")
-who_names <- as.vector(outer(c("who_short_name_", "who_formal_name_"), languages, paste0))
-un_regions <- c("un_region", "un_subregion", "un_intermediate_region")
-un_region_names <- as.vector(outer(paste0(un_regions, "_name_"), languages, paste0))
-regions_others <- c(
-  "un_desa_region", "un_desa_subregion",
-  "sdg_region", "sdg_subregion",
-  "gbd_region", "gbd_subregion",
-  "wb_region"
-)
-regions_others <- as.vector(t(outer(regions_others, c("", "_name_en"), paste0)))
-
-countries_new <- dat_who_ref_country %>%
-  left_join(dat_wb_ig, by = "iso3") %>%
-  left_join(dat_wb_reg, by = "iso3") %>%
-  left_join(dat_unsd_m49, by = c("m49", "iso3", "iso2")) %>%
-  left_join(dat_undesa_sdg, by = "iso3") %>%
-  left_join(dat_gbd, by = "iso3") %>%
-  left_join(oecd, by = "iso3") %>%
-  left_join(alt_c, by = "iso3") %>%
-  select(
-    iso3,
-    iso2,
-    iso_numeric,
-    who_code,
-    m49,
-    gbd_code,
-    sovereign_iso3,
-    who_member,
-    who_member_small,
-    oecd_member,
-    un_ldc,
-    un_lldc,
-    un_sids,
-    all_of(who_names),
-    all_of(paste0("un_name_", languages)),
-    starts_with("alt_name"),
-    starts_with("former_name"),
-    who_region,
-    all_of(un_regions),
-    all_of(un_region_names),
-    all_of(regions_others),
-    starts_with("wb_ig_")
-  )
-
+countries_new <- make_countries()
 
 # Compare with currently saved `countries` object -------------------------
 
@@ -141,12 +37,13 @@ countries_diff <- daff::diff_data(
   show_unchanged = FALSE
 )
 
+dir.create(tempdir())
 
 # Render the data diff to html
-# daff::render_diff(
-#   diff = countries_diff,
-#   title = "Comparison of current and new `whoville::countries` object"
-# )
+daff::render_diff(
+  diff = countries_diff,
+  title = "Comparison of current and new `whoville::countries` object"
+)
 
 dat_diff <- countries_diff$get_data()
 
@@ -219,7 +116,6 @@ wb_diff <- wb_diff %>%
   openxlsx2::wb_freeze_pane(first_active_row = 4, first_active_col = 4) %>%
   openxlsx2::wb_add_filter(rows = 3, cols = 1:ncol(dat_diff))
 
-dir.create(tempdir())
 openxlsx2::wb_save(wb_diff, stringr::str_glue("{here::here()}/data-raw/countries_diff.xlsx"))
 
 
