@@ -12,9 +12,9 @@
 #'
 #' @examples
 #' \dontrun{
-#' oecd <- get_oecd_countries()
+#' oecd <- get_oecd_countries_direct()
 #' }
-get_oecd_countries <- function(url = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_CPI_COU_WEIGHTS@DF_CPI_CTRY_WEIGHTS,1.0/.A..?dimensionAtObservation=AllDimensions&format=csvfilewithlabels") {
+get_oecd_countries_direct <- function(url = "https://sdmx.oecd.org/public/rest/data/OECD.SDD.TPS,DSD_CPI_COU_WEIGHTS@DF_CPI_CTRY_WEIGHTS,1.0/.A..?dimensionAtObservation=AllDimensions&format=csvfilewithlabels") {
 
   # https://www.oecd.org/en/about/members-partners.html
   # CPI country weights - OECD composition

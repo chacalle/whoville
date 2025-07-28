@@ -17,26 +17,26 @@
 #'   not exactly match one of the `whoville::countries` name columns.
 #'
 #' @returns
-#' `get_gbd()` returns a \[`tibble()`\] with the location hierarchy
-#' from the specified zip/xlsx file. `format_gbd()` returns a \[`tibble()`\]
+#' `get_gbd()_direct` returns a \[`tibble()`\] with the location hierarchy
+#' from the specified zip/xlsx file. `format_gbd()_direct` returns a \[`tibble()`\]
 #' with a row for each GBD level 3 location and the mapped `iso3` code.
 #'
 #' @examples
 #' \dontrun{
-#' dat_gbd <- get_gbd("2021") %>%
-#'   format_gbd()
+#' dat_gbd <- get_gbd_direct("2021") %>%
+#'   format_gbd_direct()
 #' }
 #'
 #' @rdname gbd
-get_gbd <- function(gbd_year = "2021",
-                    url = c(
-                      "2021" = "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2021_CODEBOOK.zip",
-                      "2019" = "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2019_CODEBOOK.zip"
-                    ),
-                    zip_fname = c(
-                      "2021" = "IHME_GBD_2021_HIERARCHIES_Y2024M05D16.XLSX",
-                      "2019" = "IHME_GBD_2019_GBD_LOCATION_HIERARCHY_Y2022M06D29.XLSX"
-                    )) {
+get_gbd_direct <- function(gbd_year = "2021",
+                           url = c(
+                             "2021" = "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2021_CODEBOOK.zip",
+                             "2019" = "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2019_CODEBOOK.zip"
+                           ),
+                           zip_fname = c(
+                             "2021" = "IHME_GBD_2021_HIERARCHIES_Y2024M05D16.XLSX",
+                             "2019" = "IHME_GBD_2019_GBD_LOCATION_HIERARCHY_Y2022M06D29.XLSX"
+                           )) {
 
   message("Getting location metadata from GBD ", gbd_year)
 
@@ -76,11 +76,11 @@ get_gbd <- function(gbd_year = "2021",
 }
 
 #' @rdname gbd
-format_gbd <- function(dat,
-                       map_iso3_manual = dplyr::tibble(
-                         `Location Name` = c("Taiwan (Province of China)", "Netherlands", "C\\u00f4te d\\'Ivoire"),
-                         iso3 = c("TWN", "NLD", "CIV")
-                       )) {
+format_gbd_direct <- function(dat,
+                              map_iso3_manual = dplyr::tibble(
+                                `Location Name` = c("Taiwan (Province of China)", "Netherlands", "C\\u00f4te d\\'Ivoire"),
+                                iso3 = c("TWN", "NLD", "CIV")
+                              )) {
 
   message("Formatting GBD location metadata to match the `whoville::countries` object")
 
