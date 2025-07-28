@@ -78,11 +78,12 @@ get_gbd_direct <- function(gbd_year = "2021",
 #' @rdname gbd
 format_gbd_direct <- function(dat,
                               map_iso3_manual = dplyr::tibble(
-                                `Location Name` = c("Taiwan (Province of China)", "Netherlands", "C\\u00f4te d\\'Ivoire"),
-                                iso3 = c("TWN", "NLD", "CIV")
+                                `Location Name` = c("Taiwan (Province of China)", "Netherlands", "C\\u00f4te d\\'Ivoire", "Palestine", "United Kingdom"),
+                                iso3 = c("TWN", "NLD", "CIV", "PSE", "GBR")
                               )) {
 
   message("Formatting GBD location metadata to match the `whoville::countries` object")
+  check_data_frame(dat)
 
   map_iso3_manual <- map_iso3_manual %>%
     dplyr::mutate(`Location Name` = stringi::stri_unescape_unicode(.data$`Location Name`))

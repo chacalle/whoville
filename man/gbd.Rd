@@ -19,7 +19,8 @@ get_gbd_direct(
 format_gbd_direct(
   dat,
   map_iso3_manual = dplyr::tibble(`Location Name` = c("Taiwan (Province of China)",
-    "Netherlands", "C\\\\u00f4te d\\\\'Ivoire"), iso3 = c("TWN", "NLD", "CIV"))
+    "Netherlands", "C\\\\u00f4te d\\\\'Ivoire", "Palestine", "United Kingdom"), iso3 =
+    c("TWN", "NLD", "CIV", "PSE", "GBR"))
 )
 }
 \arguments{
