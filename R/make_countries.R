@@ -22,7 +22,6 @@
 #' - Institute for Health Metrics and Evaluation (IHME) Global Burden of
 #' Disease (GBD) regions
 #' - Organisation for Economic Co-operation and Development (OECD) membership
-#' - Alternative and former location names
 #'
 #' @returns \[`tibble()`\] with the updated data for the `whoville::countries`
 #' object.
@@ -86,18 +85,6 @@ make_countries <- function(wb_use_xmart = TRUE,
   if (sdg_use_xmart) {
     dat_sdg <- format_sdg_xmart(dat_who_ref_groups_current)
 
-  # TODO: where did this file come from?
-  alt_c <- readxl::read_excel("data-raw/alt_countries.xlsx") %>%
-    dplyr::select(
-      "iso3",
-      alt_name_en = "altname",
-      alt_name_2_en = "altname2",
-      alt_name_3_en = "altname3",
-      alt_name_4_en = "altname4",
-      alt_name_5_en = "altname5",
-      former_name_en = "formername",
-      former_name_2_en = "formername2"
-    )
     dat_undesa_sdg <- dat_undesa_sdg %>%
       dplyr::select(-dplyr::starts_with("sdg")) %>%
       dplyr::left_join(
@@ -134,7 +121,6 @@ make_countries <- function(wb_use_xmart = TRUE,
     dplyr::left_join(dat_undesa_sdg, by = "iso3") %>%
     dplyr::left_join(dat_gbd, by = "iso3") %>%
     dplyr::left_join(oecd, by = "iso3") %>%
-    dplyr::left_join(alt_c, by = "iso3") %>%
     dplyr::select(
       "iso3",
       "iso2",
@@ -151,8 +137,6 @@ make_countries <- function(wb_use_xmart = TRUE,
       "un_sids",
       dplyr::all_of(who_names),
       dplyr::all_of(paste0("un_name_", languages)),
-      dplyr::starts_with("alt_name"),
-      dplyr::starts_with("former_name"),
       "who_region",
       dplyr::all_of(un_regions),
       dplyr::all_of(un_region_names),

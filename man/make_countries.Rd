@@ -43,7 +43,6 @@ Sustainable Development Goals (SDG) regions
 \item Institute for Health Metrics and Evaluation (IHME) Global Burden of
 Disease (GBD) regions
 \item Organisation for Economic Co-operation and Development (OECD) membership
-\item Alternative and former location names
 }
 }
 \examples{
