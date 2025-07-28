@@ -22,21 +22,32 @@
 #'   The returned object from `get_undesa_sdg` to be formatted to match the
 #'   `whoville::countries` object formatting.
 #'
-#' @returns `get_undesa_sdg` returns a \[`tibble()`\] with the raw data found
-#' in the 'Locations (XLSX)' document 'DB' sheet. `format_undesa_sdg` returns a
+#' @returns
+#' `format_sdg_xmart` returns a \[`tibble()`\] with the SDG regions definied in
+#' xMart 'REFMART/REF_GROUPS_CURRENT' formatted to match the
+#' `whoville::countries` object.
+#'
+#' `get_undesa_sdg_direct` returns a \[`tibble()`\] with the raw data found
+#' in the 'Locations (XLSX)' document 'DB' sheet. `format_undesa_sdg_direct` returns a
 #' \[`tibble()`\] with the same data formatted to match the
 #' `whoville::countries` object.
 #'
 #' @examples
 #' \dontrun{
-#' undesa_sdg <- get_undesa_sdg() %>%
-#'   format_undesa_sdg()
+#' dat_sdg <- format_sdg_xmart(
+#'   dat_ref_groups_current =  get_who_public_xmart(
+#'     url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_CURRENT"
+#'   )
+#' )
+#'
+#' undesa_sdg <- get_undesa_sdg_direct() %>%
+#'   format_undesa_sdg_direct()
 #' }
 #'
 #' @rdname undesa_sdg
-get_undesa_sdg <- function(url_file = "https://population.un.org/wpp/assets/Excel%20Files/4_Metadata/WPP2024_F01_LOCATIONS.xlsx",
-                           url_wpp = "https://population.un.org/wpp/",
-                           wpp_year = 2024) {
+get_undesa_sdg_direct <- function(url_file = "https://population.un.org/wpp/assets/Excel%20Files/4_Metadata/WPP2024_F01_LOCATIONS.xlsx",
+                                  url_wpp = "https://population.un.org/wpp/",
+                                  wpp_year = 2024) {
 
   message("Getting location metadata from UN DESA & SDG")
   check_string(url_file, allow_empty = FALSE)
@@ -69,7 +80,7 @@ get_undesa_sdg <- function(url_file = "https://population.un.org/wpp/assets/Exce
 }
 
 #' @rdname undesa_sdg
-format_undesa_sdg <- function(dat_undesa_sdg) {
+format_undesa_sdg_direct <- function(dat_undesa_sdg) {
 
   message("Formatting UN DESA & SDG location metadata to match the `whoville::countries` object")
 
@@ -123,4 +134,33 @@ format_undesa_sdg <- function(dat_undesa_sdg) {
       )
     )
   return(dat_undesa_sdg)
+}
+
+#' @rdname undesa_sdg
+#' @inheritParams format_unsd_special_xmart
+format_sdg_xmart <- function(dat_ref_groups_current) {
+  check_data_frame(dat_ref_groups_current)
+
+  dat_sdg <- dat_ref_groups_current %>%
+    dplyr::filter(.data$GROUP_TYPE_CODE == "UNSD_REGION_SDG") %>%
+    dplyr::filter(.data$GROUP_NAME != "Europe, Northern America, Australia and New Zealand") %>%
+    dplyr::select(m49 = "GEO_CODE_M49", "GROUP_CODE", "GROUP_NAME", "GROUP_LEVEL") %>%
+    dplyr::mutate(
+      m49 = .data$m49 %>%
+        as.numeric() %>%
+        as.character(),
+      GROUP_LEVEL = dplyr::case_when(
+        .data$GROUP_LEVEL == 2 ~ "sdg_region",
+        .data$GROUP_LEVEL == 3 ~ "sdg_subregion"
+      )
+    ) %>%
+    tidyr::pivot_longer(cols = c("GROUP_CODE", "GROUP_NAME")) %>%
+    dplyr::mutate(
+      name = dplyr::case_match(
+        .data$name,
+        "GROUP_CODE" ~ "",
+        "GROUP_NAME" ~ "_name_en")
+    ) %>%
+    tidyr::pivot_wider(names_from = c("GROUP_LEVEL", "name"), names_sep = "", values_from = "value")
+  return(dat_sdg)
 }
