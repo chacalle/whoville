@@ -2,13 +2,25 @@
 #'
 #' @param wb_use_xmart \[`logical(1)`\]\cr
 #'   Whether to get the world bank income groups and regions from xMart or
-#'   directly from the world bank website.
+#'   directly from the world bank website. Default is TRUE.
 #' @param unsd_special_use_xmart \[`logical(1)`\]\cr
 #'   Whether to get the special unsd classifications (ldc, lldc, sids) from xMart
-#'   or directly from the unsd website.
+#'   or directly from the unsd website. Default is TRUE.
 #' @param sdg_use_xmart \[`logical(1)`\]\cr
 #'   Whether to get the sdg regions from xMart or directly from the undesa wpp
-#'   files.
+#'   files. Default is TRUE.
+#' @param include_undesa \[`logical(1)`\]\cr
+#'   Whether to include the undesa regions when making the countries object.
+#'   Default is FALSE to enable quicker and less buggy creation of the object
+#'   for when users are attempting to make their own updated object.
+#' @param include_gbd \[`logical(1)`\]\cr
+#'   Whether to include the gbd regions when making the countries object.
+#'   Default is FALSE to enable quicker and less buggy creation of the object
+#'   for when users are attempting to make their own updated object.
+#' @param include_oecd \[`logical(1)`\]\cr
+#'   Whether to include oecd membership when making the countries object.
+#'   Default is FALSE to enable quicker and less buggy creation of the object
+#'   for when users are attempting to make their own updated object.
 #'
 #' @details
 #' - Basic location codes (m49, iso3, iso2, etc)
@@ -34,11 +46,18 @@
 #' @export
 make_countries <- function(wb_use_xmart = TRUE,
                            unsd_special_use_xmart = TRUE,
-                           sdg_use_xmart = TRUE) {
+                           sdg_use_xmart = TRUE,
+                           include_undesa = FALSE,
+                           include_gbd = FALSE,
+                           include_oecd = FALSE) {
 
   check_bool(wb_use_xmart)
   check_bool(unsd_special_use_xmart)
   check_bool(sdg_use_xmart)
+
+  check_bool(include_undesa)
+  check_bool(include_gbd)
+  check_bool(include_oecd)
 
   dat_who_ref_country <- get_who_public_xmart(
     url = "https://xmart-api-public.who.int/REFMART/REF_COUNTRY"
@@ -80,27 +99,44 @@ make_countries <- function(wb_use_xmart = TRUE,
   }
 
   # get the undesa and sdg regions
-  dat_undesa_sdg <- get_undesa_sdg_direct() %>%
-    format_undesa_sdg_direct()
-  if (sdg_use_xmart) {
-    dat_sdg <- format_sdg_xmart(dat_who_ref_groups_current)
+  if (include_undesa | !sdg_use_xmart) {
+    dat_undesa_sdg <- get_undesa_sdg_direct() %>%
+      format_undesa_sdg_direct()
 
-    dat_undesa_sdg <- dat_undesa_sdg %>%
-      dplyr::select(-dplyr::starts_with("sdg")) %>%
+    if (!include_undesa) {
+      dat_undesa_sdg <- dat_undesa_sdg %>%
+        dplyr::select(-dplyr::starts_with("un_desa"))
+    }
+  }
+  if (sdg_use_xmart) {
+    dat_sdg <- format_sdg_xmart(dat_who_ref_groups_current) %>%
       dplyr::left_join(
         y = dat_who_ref_country %>%
           dplyr::select("iso3", "m49"),
-        by = "iso3"
+        by = "m49"
       ) %>%
-      dplyr::full_join(dat_sdg, by = "m49") %>%
       dplyr::select(-"m49")
+
+    if (include_undesa) {
+      dat_undesa_sdg <- dat_undesa_sdg %>%
+        dplyr::select(-dplyr::starts_with("sdg")) %>%
+        dplyr::full_join(dat_sdg, by = "iso3")
+    } else {
+      dat_undesa_sdg <- dat_sdg
+    }
   }
 
-  # TODO: automatically check if a more recent GBD year is available
-  dat_gbd <- get_gbd_direct("2021") %>%
-    format_gbd_direct()
+  dat_gbd <- NULL
+  if (include_gbd) {
+    # TODO: automatically check if a more recent GBD year is available
+    dat_gbd <- get_gbd_direct() %>%
+      format_gbd_direct()
+  }
 
-  oecd <- get_oecd_countries_direct()
+  oecd <- NULL
+  if (include_oecd) {
+    oecd <- get_oecd_countries_direct()
+  }
 
   languages <- c("en", "ru", "fr", "es", "ar", "zh")
   who_names <- as.vector(outer(c("who_short_name_", "who_formal_name_"), languages, paste0))
@@ -113,36 +149,55 @@ make_countries <- function(wb_use_xmart = TRUE,
     "wb_region"
   )
   regions_others <- as.vector(t(outer(regions_others, c("", "_name_en"), paste0)))
+  wb_igs <- grep("wb_ig_", names(dat_wb_ig), value = TRUE)
+
+  col_order <- c(
+    "iso3",
+    "iso2",
+    "iso_numeric",
+    "who_code",
+    "m49",
+    "gbd_code",
+    "sovereign_iso3",
+    "who_member",
+    "who_member_small",
+    "oecd_member",
+    "un_ldc",
+    "un_lldc",
+    "un_sids",
+    who_names,
+    paste0("un_name_", languages),
+    "who_region",
+    un_regions,
+    un_region_names,
+    regions_others,
+    wb_igs
+  )
+  if (!include_undesa) {
+    col_order <- grep("^un_desa_", col_order, value = TRUE, invert = TRUE)
+  }
+  if (!include_gbd) {
+    col_order <- grep("^gbd_", col_order, value = TRUE, invert = TRUE)
+  }
+  if (!include_oecd) {
+    col_order <- grep("^oecd_", col_order, value = TRUE, invert = TRUE)
+  }
 
   countries <- dat_who_ref_country %>%
     dplyr::left_join(dat_wb_ig, by = ifelse(wb_use_xmart, "m49", "iso3")) %>%
     dplyr::left_join(dat_wb_reg, by = ifelse(wb_use_xmart, "m49", "iso3")) %>%
     dplyr::left_join(dat_unsd_m49, by = c("m49", "iso3", "iso2")) %>%
-    dplyr::left_join(dat_undesa_sdg, by = "iso3") %>%
-    dplyr::left_join(dat_gbd, by = "iso3") %>%
-    dplyr::left_join(oecd, by = "iso3") %>%
-    dplyr::select(
-      "iso3",
-      "iso2",
-      "iso_numeric",
-      "who_code",
-      "m49",
-      "gbd_code",
-      "sovereign_iso3",
-      "who_member",
-      "who_member_small",
-      "oecd_member",
-      "un_ldc",
-      "un_lldc",
-      "un_sids",
-      dplyr::all_of(who_names),
-      dplyr::all_of(paste0("un_name_", languages)),
-      "who_region",
-      dplyr::all_of(un_regions),
-      dplyr::all_of(un_region_names),
-      dplyr::all_of(regions_others),
-      dplyr::starts_with("wb_ig_")
-    )
+    dplyr::left_join(dat_undesa_sdg, by = "iso3")
+
+  if (include_gbd) {
+    countries <- dplyr::left_join(countries, dat_gbd, by = "iso3")
+  }
+  if (include_oecd) {
+    countries <- dplyr::left_join(countries, oecd, by = "iso3")
+  }
+
+  countries <- countries %>%
+    dplyr::select(!!!rlang::syms(col_order))
 
   return(countries)
 }

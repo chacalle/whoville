@@ -15,7 +15,7 @@ test_that("`get_who_public_xmart` works", {
   testthat::expect_identical(expected, result)
 })
 
-test_that("`make_countries` works with args set to 'TRUE'", {
+test_that("`make_countries` works with 'xmart' args set to 'TRUE'", {
   testthat::skip_if_offline()
 
   args <- formalArgs(make_countries)
@@ -28,13 +28,28 @@ test_that("`make_countries` works with args set to 'TRUE'", {
   testthat::expect_true(nrow(result) > 0)
 })
 
-test_that("`make_countries` works with args set to 'FALSE'", {
+test_that("`make_countries` works with 'xmart' args set to 'FALSE'", {
   testthat::skip_if_offline()
 
   args <- formalArgs(make_countries)
   args <- rep(FALSE, length(args)) %>%
     as.list() %>%
     setNames(args)
+  args[grepl("include", names(args))] <- TRUE
+
+  result <- do.call(make_countries, args)
+
+  testthat::expect_true(nrow(result) > 0)
+})
+
+test_that("`make_countries` works with 'xmart' args set to 'TRUE' and 'include' arguments set to 'FALSE'", {
+  testthat::skip_if_offline()
+
+  args <- formalArgs(make_countries)
+  args <- rep(TRUE, length(args)) %>%
+    as.list() %>%
+    setNames(args)
+  args[grepl("include", names(args))] <- FALSE
 
   result <- do.call(make_countries, args)
 

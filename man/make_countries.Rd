@@ -7,21 +7,39 @@
 make_countries(
   wb_use_xmart = TRUE,
   unsd_special_use_xmart = TRUE,
-  sdg_use_xmart = TRUE
+  sdg_use_xmart = TRUE,
+  include_undesa = FALSE,
+  include_gbd = FALSE,
+  include_oecd = FALSE
 )
 }
 \arguments{
 \item{wb_use_xmart}{[\code{logical(1)}]\cr
 Whether to get the world bank income groups and regions from xMart or
-directly from the world bank website.}
+directly from the world bank website. Default is TRUE.}
 
 \item{unsd_special_use_xmart}{[\code{logical(1)}]\cr
 Whether to get the special unsd classifications (ldc, lldc, sids) from xMart
-or directly from the unsd website.}
+or directly from the unsd website. Default is TRUE.}
 
 \item{sdg_use_xmart}{[\code{logical(1)}]\cr
 Whether to get the sdg regions from xMart or directly from the undesa wpp
-files.}
+files. Default is TRUE.}
+
+\item{include_undesa}{[\code{logical(1)}]\cr
+Whether to include the undesa regions when making the countries object.
+Default is FALSE to enable quicker and less buggy creation of the object
+for when users are attempting to make their own updated object.}
+
+\item{include_gbd}{[\code{logical(1)}]\cr
+Whether to include the gbd regions when making the countries object.
+Default is FALSE to enable quicker and less buggy creation of the object
+for when users are attempting to make their own updated object.}
+
+\item{include_oecd}{[\code{logical(1)}]\cr
+Whether to include oecd membership when making the countries object.
+Default is FALSE to enable quicker and less buggy creation of the object
+for when users are attempting to make their own updated object.}
 }
 \value{
 [\code{tibble()}] with the updated data for the \code{whoville::countries}
