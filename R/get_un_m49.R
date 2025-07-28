@@ -10,20 +10,41 @@
 #'   Named character vector with the values corresponding to the language names
 #'   used in `dat_unsd_m49` and names corresponding to the language code to use
 #'   in the returned formatted data frame.
+#' @param dat_ref_groups_current \[`data.frame(1)`\]\cr
+#'   The xMart4 REFMART 'REF_GROUPS_CURRENT' table to be formatted to match the
+#'   `whoville::countries` object formatting.
+#' @param unsd_m49s \[`data.frame(1)`\]\cr
+#'   The data returned from `format_un_m49` which is used to determine the complete
+#'   list of locations that unsd classifies as ldc, lldc or sids.
 #'
 #' @returns
-#' `get_un_m49` returns a named list of \[`data.frame()`\]s with the list names
-#' corresponding to the labeled language. `format_un_m49` returns a \[`tibble()`\]
+#' `format_unsd_special_xmart` returns a \[`tibble()`\] with the UNSD special
+#' groups for 'Least Developed Countries (LDCs)', 'Landlocked developing
+#' countries (LLDCs)', and 'Small island developing States (SIDS)' formatted to
+#' match the `whoville::countries` object.
+#'
+#' `get_un_m49_direct` returns a named list of \[`data.frame()`\]s with the list names
+#' corresponding to the labeled language. `format_un_m49_direct` returns a \[`tibble()`\]
 #' with the same data formatted to match the `whoville::countries` object.
 #'
 #' @examples
 #' \dontrun{
-#' un_m49 <- get_un_m49() %>%
-#'   format_un_m49()
+#' dat_unsd_special <- format_unsd_special_xmart(
+#'   dat_ref_groups_current =  get_who_public_xmart(
+#'     url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_CURRENT"
+#'   ),
+#'   dat_ref_country = get_who_public_xmart(
+#'     url = "https://xmart-api-public.who.int/REFMART/REF_COUNTRY"
+#'   ) %>%
+#'     format_who_xmart_ref_country()
+#' )
+#'
+#' un_m49 <- get_un_m49_direct() %>%
+#'   format_un_m49_direct()
 #' }
 #'
 #' @rdname un_m49
-get_un_m49 <- function(url = "https://unstats.un.org/unsd/methodology/m49/overview/") {
+get_un_m49_direct <- function(url = "https://unstats.un.org/unsd/methodology/m49/overview/") {
 
   rlang::check_installed(
     pkg = "rvest",
@@ -48,14 +69,14 @@ get_un_m49 <- function(url = "https://unstats.un.org/unsd/methodology/m49/overvi
 }
 
 #' @rdname un_m49
-format_un_m49 <- function(dat_unsd_m49,
-                          language_codes = c(
-                            "ru" = "russian",
-                            "fr" = "french",
-                            "es" = "spanish",
-                            "ar" = "arabic",
-                            "zh" = "chinese"
-                          )) {
+format_un_m49_direct <- function(dat_unsd_m49,
+                                 language_codes = c(
+                                   "ru" = "russian",
+                                   "fr" = "french",
+                                   "es" = "spanish",
+                                   "ar" = "arabic",
+                                   "zh" = "chinese"
+                                 )) {
 
   stopifnot(rlang::is_character(language_codes))
   stopifnot(rlang::is_list(dat_unsd_m49))
@@ -133,4 +154,42 @@ format_un_m49 <- function(dat_unsd_m49,
     # mutate(across(starts_with("un_intermediate_region_name"), ~ na_if(x = .x, y = "")))
 
   return(unsd_m49)
+}
+
+#' @rdname un_m49
+format_unsd_special_xmart <-function(dat_ref_groups_current,
+                                     unsd_m49s) {
+  check_data_frame(dat_ref_groups_current)
+  check_data_frame(unsd_m49s)
+
+  dat_formatted <- dat_ref_groups_current %>%
+    dplyr::filter(
+      .data$GROUP_NAME %in% c(
+        "Least Developed Countries (LDCs)",
+        "Landlocked developing countries (LLDCs)",
+        "Small island developing States (SIDS)"
+      )
+    ) %>%
+    dplyr::select(m49 = "GEO_CODE_M49", "GROUP_NAME") %>%
+    dplyr::mutate(
+      m49 = .data$m49 %>%
+        as.numeric() %>%
+        as.character(),
+      GROUP_NAME = dplyr::case_match(
+        .data$GROUP_NAME,
+        "Least Developed Countries (LDCs)" ~ "un_ldc",
+        "Landlocked developing countries (LLDCs)" ~ "un_lldc",
+        "Small island developing States (SIDS)" ~ "un_sids"
+      ),
+      value = TRUE
+    ) %>%
+    tidyr::pivot_wider(names_from = "GROUP_NAME") %>%
+    dplyr::full_join(
+      y = unsd_m49s %>%
+        dplyr::select("m49"),
+      by = "m49"
+    ) %>%
+    tidyr::replace_na(replace = list("un_ldc" = FALSE, "un_lldc" = FALSE, "un_sids" = FALSE))
+
+  return(dat_formatted)
 }
