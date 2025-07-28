@@ -4,7 +4,24 @@
 \alias{make_countries}
 \title{Make the \code{whoville::countries} dataset}
 \usage{
-make_countries()
+make_countries(
+  wb_use_xmart = TRUE,
+  unsd_special_use_xmart = TRUE,
+  sdg_use_xmart = TRUE
+)
+}
+\arguments{
+\item{wb_use_xmart}{[\code{logical(1)}]\cr
+Whether to get the world bank income groups and regions from xMart or
+directly from the world bank website.}
+
+\item{unsd_special_use_xmart}{[\code{logical(1)}]\cr
+Whether to get the special unsd classifications (ldc, lldc, sids) from xMart
+or directly from the unsd website.}
+
+\item{sdg_use_xmart}{[\code{logical(1)}]\cr
+Whether to get the sdg regions from xMart or directly from the undesa wpp
+files.}
 }
 \value{
 [\code{tibble()}] with the updated data for the \code{whoville::countries}

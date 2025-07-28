@@ -1,5 +1,15 @@
 #' @title Make the `whoville::countries` dataset
 #'
+#' @param wb_use_xmart \[`logical(1)`\]\cr
+#'   Whether to get the world bank income groups and regions from xMart or
+#'   directly from the world bank website.
+#' @param unsd_special_use_xmart \[`logical(1)`\]\cr
+#'   Whether to get the special unsd classifications (ldc, lldc, sids) from xMart
+#'   or directly from the unsd website.
+#' @param sdg_use_xmart \[`logical(1)`\]\cr
+#'   Whether to get the sdg regions from xMart or directly from the undesa wpp
+#'   files.
+#'
 #' @details
 #' - Basic location codes (m49, iso3, iso2, etc)
 #' - WHO regions and location name translations
@@ -23,29 +33,58 @@
 #' }
 #'
 #' @export
-make_countries <- function() {
+make_countries <- function(wb_use_xmart = TRUE,
+                           unsd_special_use_xmart = TRUE,
+                           sdg_use_xmart = TRUE) {
+
+  check_bool(wb_use_xmart)
+  check_bool(unsd_special_use_xmart)
+  check_bool(sdg_use_xmart)
 
   dat_who_ref_country <- get_who_public_xmart(
     url = "https://xmart-api-public.who.int/REFMART/REF_COUNTRY"
   ) %>%
     format_who_xmart_ref_country()
 
-  dat_wb_ig <- get_wb_ig() %>%
-    format_wb_ig()
-  dat_wb_reg <- get_wb_reg() %>%
-    format_wb_reg()
+  dat_who_ref_groups_current <- get_who_public_xmart(
+    url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_CURRENT"
+  )
 
-  dat_unsd_m49 <- get_un_m49() %>%
-    format_un_m49()
+  # get the world bank income groups and regions
+  if (wb_use_xmart) {
+    dat_wb_ig <- get_who_public_xmart(
+      url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_FULL?$filter=GROUP_TYPE_CODE eq 'WB_INCOME'"
+    ) %>%
+      format_wb_ig_xmart()
 
-  dat_undesa_sdg <- get_undesa_sdg() %>%
-    format_undesa_sdg()
+    dat_wb_reg <- dat_who_ref_groups_current %>%
+      dplyr::filter(.data$GROUP_TYPE_CODE == "WB_REGION") %>%
+      format_wb_reg_xmart()
+  } else {
+    dat_wb_ig <- get_wb_ig_direct() %>%
+      format_wb_ig_direct()
+    dat_wb_reg <- get_wb_reg_direct() %>%
+      format_wb_reg_direct()
+  }
 
-  # TODO: automatically check if a more recent GBD year is available
-  dat_gbd <- get_gbd("2021") %>%
-    format_gbd()
+  # get the unsd regions and special groups
+  dat_unsd_m49 <- get_un_m49_direct() %>%
+    format_un_m49_direct()
+  if (unsd_special_use_xmart) {
+    dat_unsd_special <- format_unsd_special_xmart(
+      dat_ref_groups_current =  dat_who_ref_groups_current,
+      unsd_m49s = dat_unsd_m49
+    )
+    dat_unsd_m49 <- dat_unsd_m49 %>%
+      dplyr::select(-c("un_ldc", "un_lldc", "un_sids")) %>%
+      dplyr::full_join(dat_unsd_special, by = "m49")
+  }
 
-  oecd <- get_oecd_countries()
+  # get the undesa and sdg regions
+  dat_undesa_sdg <- get_undesa_sdg_direct() %>%
+    format_undesa_sdg_direct()
+  if (sdg_use_xmart) {
+    dat_sdg <- format_sdg_xmart(dat_who_ref_groups_current)
 
   # TODO: where did this file come from?
   alt_c <- readxl::read_excel("data-raw/alt_countries.xlsx") %>%
@@ -59,6 +98,22 @@ make_countries <- function() {
       former_name_en = "formername",
       former_name_2_en = "formername2"
     )
+    dat_undesa_sdg <- dat_undesa_sdg %>%
+      dplyr::select(-dplyr::starts_with("sdg")) %>%
+      dplyr::left_join(
+        y = dat_who_ref_country %>%
+          dplyr::select("iso3", "m49"),
+        by = "iso3"
+      ) %>%
+      dplyr::full_join(dat_sdg, by = "m49") %>%
+      dplyr::select(-"m49")
+  }
+
+  # TODO: automatically check if a more recent GBD year is available
+  dat_gbd <- get_gbd_direct("2021") %>%
+    format_gbd_direct()
+
+  oecd <- get_oecd_countries_direct()
 
   languages <- c("en", "ru", "fr", "es", "ar", "zh")
   who_names <- as.vector(outer(c("who_short_name_", "who_formal_name_"), languages, paste0))
@@ -73,8 +128,8 @@ make_countries <- function() {
   regions_others <- as.vector(t(outer(regions_others, c("", "_name_en"), paste0)))
 
   countries <- dat_who_ref_country %>%
-    dplyr::left_join(dat_wb_ig, by = "iso3") %>%
-    dplyr::left_join(dat_wb_reg, by = "iso3") %>%
+    dplyr::left_join(dat_wb_ig, by = ifelse(wb_use_xmart, "m49", "iso3")) %>%
+    dplyr::left_join(dat_wb_reg, by = ifelse(wb_use_xmart, "m49", "iso3")) %>%
     dplyr::left_join(dat_unsd_m49, by = c("m49", "iso3", "iso2")) %>%
     dplyr::left_join(dat_undesa_sdg, by = "iso3") %>%
     dplyr::left_join(dat_gbd, by = "iso3") %>%
