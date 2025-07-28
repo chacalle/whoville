@@ -20,12 +20,22 @@ wb_ig_years <- function() {
 #' Each fiscal year, the World Bank updates their income group country
 #' classifications and releases the files
 #' [here](https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups).
+#'
 #' The links to the "historical classification by income in XLSX format" and
 #' the "current classification by income in XLSX format" include the World Bank
-#' Income Group and World Bank Region classifications respectively.
+#' Income Group and World Bank Region classifications respectively. The
+#' `get_wb_ig_direct` & `get_wb_reg_direct` download these files and read in the
+#' corresponding sheet from the XLSX document. `format_wb_ig_direct` and
+#' `format_wb_reg_direct` then format the data to match the `whoville::countries`
+#' object formatting.
+#'
+#' Alternatively (preferably), this same data is extracted and uploaded to the
+#' xMart4 REFMART 'REF_GROUPS_CURRENT' & 'REF_GROUPS_FULL' tables.
+#' `format_wb_ig_xmart` & `format_wb_ref_xmart` format data from these tables
+#' to match the `whoville::countries` object formatting.
 #'
 #' @param url \[`character(1)`\]\cr
-#'   Url to download the country classifications if xlsx format.
+#'   Url to download the country classifications directly from the WB website.
 #' @param sheet \[`character(1)`\]\cr
 #'   The name of the sheet within the xlsx document where the country
 #'   classifications are stored.
@@ -35,26 +45,39 @@ wb_ig_years <- function() {
 #' @param skip_data \[`integer(1)`\]\cr
 #'   The number of rows to skip when reading the XLSX document before reaching
 #'   the data rows with the country classifications.
-#' @param dat \[`data.frame(1)`\]\cr
-#'   The original country classification data from the World Bank to be formatted
-#'   to match the `whoville::countries` object formatting.
+#' @param dat_raw \[`data.frame(1)`\]\cr
+#'   The original country classification data from the World Bank or xMart4
+#'   REFMART tables to be formatted to match the `whoville::countries` object
+#'   formatting.
 #'
 #' @returns
-#' `get_wb_ig` and `get_wb_reg` return a \[`tibble()`\] with data from the
-#' specified XLSX document. `format_wb_ig` and `format_wb_reg` return a
-#' \[`tibble()`\] with the same data formatted to match the `whoville::countries`
-#' object formatting.
+#' `get_wb_ig_xmart` & `get_wb_reg_xmart` return a \[`tibble()`\] with data
+#' formatted to match the `whoville::countries` object formatting.
+#'
+#' `get_wb_ig_direct` and `get_wb_reg_direct` return a \[`tibble()`\] with data
+#' from the specified World Bank XLSX document. `format_wb_ig_direct` and
+#' `format_wb_reg_direct` return a \[`tibble()`\] with the same data formatted
+#' to match the `whoville::countries` object formatting.
 #'
 #' @examples
 #' \dontrun{
-#' wb_ig <- get_wb_ig() %>%
-#'   format_wb_ig()
-#' wb_reg <- get_wb_reg() %>%
-#'   format_wb_reg()
+#' wb_ig_xmart <- get_who_public_xmart(
+#'   url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_FULL?$filter=GROUP_TYPE_CODE eq 'WB_INCOME'"
+#' ) %>%
+#'   format_wb_ig_xmart()
+#' wb_ig_direct <- get_wb_ig_direct() %>%
+#'   format_wb_ig_direct()
+#'
+#' wb_reg_xmart <- get_who_public_xmart(
+#'   url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_CURRENT?$filter=GROUP_TYPE_CODE eq 'WB_REGION'"
+#' ) %>%
+#'   format_wb_reg_xmart()
+#' wb_reg_direct <- get_wb_reg_direct() %>%
+#'   format_wb_reg_direct()
 #' }
 #'
 #' @rdname wb
-get_wb_ig <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
+get_wb_ig_direct <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
                       sheet = "Country Analytical History",
                       skip_years = 5,
                       skip_data = 10) {
@@ -103,8 +126,8 @@ get_wb_ig <- function(url = "https://ddh-openapi.worldbank.org/resources/DR00953
 }
 
 #' @rdname wb
-get_wb_reg <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095333/download",
-                       sheet = "List of economies") {
+get_wb_reg_direct <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095333/download",
+                              sheet = "List of economies") {
 
   temp <- tempfile(fileext = ".xlsx")
   utils::download.file(url, temp, quiet = TRUE)
@@ -118,8 +141,10 @@ get_wb_reg <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095
 }
 
 #' @rdname wb
-format_wb_ig <- function(dat) {
-  dat_formatted <- dat %>%
+format_wb_ig_direct <- function(dat_raw) {
+  check_data_frame(dat_raw)
+
+  dat_formatted <- dat_raw %>%
     # blank space in sheet before former countries ("Czechoslovakia (former)", etc.)
     dplyr::filter(!is.na(.data$iso3)) %>%
     dplyr::mutate(
@@ -139,12 +164,75 @@ format_wb_ig <- function(dat) {
 }
 
 #' @rdname wb
-format_wb_reg <- function(dat) {
-  dat_formatted <- dat %>%
+format_wb_reg_direct <- function(dat_raw) {
+  check_data_frame(dat_raw)
+
+  dat_formatted <- dat_raw %>%
     dplyr::filter(!is.na(.data$Region)) %>%
     dplyr::rename(iso3 = "Code", wb_region = "Region") %>%
     dplyr::select("iso3", "wb_region") %>%
     dplyr::mutate(wb_region_name_en = .data$wb_region) %>%
     assert_no_nas()
+  return(dat_formatted)
+}
+
+#' @rdname wb
+format_wb_ig_xmart <- function(dat_raw) {
+  check_data_frame(dat_raw)
+
+  dat_formatted <- dat_raw %>%
+    dplyr::filter(!is.na(.data$GROUP_CODE)) %>%
+    dplyr::select(m49 = "GEO_CODE_M49", "GRP_RELEASE_CODE", "GROUP_NAME") %>%
+    dplyr::mutate(
+      m49 = .data$m49 %>%
+        as.numeric() %>%
+        as.character(),
+
+      GRP_RELEASE_CODE = stringr::str_replace(.data$GRP_RELEASE_CODE, "FY", "") %>%
+        as.numeric(),
+      GRP_RELEASE_CODE = dplyr::case_when(
+        GRP_RELEASE_CODE >= 80 ~ 1900 + .data$GRP_RELEASE_CODE,
+        .default = 2000 + .data$GRP_RELEASE_CODE
+      ),
+      # convert from fiscal year to calendar year
+      GRP_RELEASE_CODE = .data$GRP_RELEASE_CODE - 2,
+
+      GROUP_NAME = dplyr::case_match(
+        .data$GROUP_NAME,
+        "Low income" ~ "LIC",
+        "Lower middle income" ~ "LMC",
+        "Upper middle income" ~ "UMC",
+        "High income" ~ "HIC"
+      )
+    ) %>%
+    assert_no_nas() %>%
+    dplyr::arrange(.data$m49, .data$GRP_RELEASE_CODE) %>%
+    tidyr::pivot_wider(
+      names_from = "GRP_RELEASE_CODE",
+      names_prefix = "wb_ig_",
+      values_from = "GROUP_NAME"
+    )
+
+  # arrange correctly by year
+  nms <- names(dat_formatted) %>%
+    setdiff("m49") %>%
+    sort()
+  dat_formatted <- dat_formatted %>%
+    dplyr::select("m49", dplyr::all_of(nms))
+
+  return(dat_formatted)
+}
+
+#' @rdname wb
+format_wb_reg_xmart <- function(dat_raw) {
+  check_data_frame(dat_raw)
+
+  dat_formatted <- dat_raw %>%
+    dplyr::select(m49 = "GEO_CODE_M49", wb_region = "GROUP_CODE", wb_region_name_en = "GROUP_NAME") %>%
+    dplyr::mutate(
+      m49 = .data$m49 %>%
+        as.numeric() %>%
+        as.character(),
+    )
   return(dat_formatted)
 }

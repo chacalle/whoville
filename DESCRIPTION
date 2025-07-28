@@ -22,6 +22,7 @@ Imports:
     stringdist,
     stringi,
     stringr,
+    tidyr,
     zip
 Suggests:
     httr2,
