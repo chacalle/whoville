@@ -4,13 +4,21 @@
 \alias{who_member_states}
 \title{Get ISO3 codes for WHO member states.}
 \usage{
-who_member_states(include = c("all", "small", "large"))
+who_member_states(
+  include = c("all", "small", "large"),
+  countries_manual = NULL
+)
 }
 \arguments{
 \item{include}{Subset of member states to return.
 * "all": All member states (the default)
 * "small": Small member states (2018 population < 90,000)
 * "large": Large member states (2018 population >= 90,000)}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 A character vector of ISO3 codes.

@@ -11,7 +11,8 @@ names_to_code(
   ignore_case = T,
   fuzzy_matching = c("yes", "no", "user_input"),
   method = "jw",
-  p = 0.1
+  p = 0.1,
+  countries_manual = NULL
 )
 }
 \arguments{
@@ -37,6 +38,11 @@ in matching names. See \code{\link[stringdist:stringdist]{stringdist::stringdist
 
 \item{p}{A numeric value between 0 and 0.25 specifying the penalty factor
 for Jaro-Winkler distance. Ignored if method is not "jw".}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 A vector of country codes matched to the names.

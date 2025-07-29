@@ -4,13 +4,17 @@
 #' on whether that country is a WHO member state or not.
 #'
 #' @param iso3 Character vector of ISO3 codes.
+#' @inheritParams resolve_countries_arg
 #'
 #' @return Logical vector.
 #'
 #' @export
-is_who_member <- function(iso3) {
-  members <- whoville::countries[["who_member"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_who_member <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "who_member"))
+
+  members <- countries_use[["who_member"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -27,9 +31,12 @@ is_who_member <- function(iso3) {
 #' @return Logical vector.
 #'
 #' @export
-is_who_member_small <- function(iso3) {
-  members <- whoville::countries[["who_member_small"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_who_member_small <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "who_member_small"))
+
+  members <- countries_use[["who_member_small"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -45,8 +52,10 @@ is_who_member_small <- function(iso3) {
 #' @return Logical vector.
 #'
 #' @export
-is_who_member_large <- function(iso3) {
-  is_who_member(iso3) & !is_who_member_small(iso3)
+is_who_member_large <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+
+  is_who_member(iso3, countries_manual = countries_use) & !is_who_member_small(iso3, countries_manual = countries_use)
 }
 
 #' Get ISO3 codes for WHO member states.
@@ -60,19 +69,23 @@ is_who_member_large <- function(iso3) {
 #'     * "all": All member states (the default)
 #'     * "small": Small member states (2018 population < 90,000)
 #'     * "large": Large member states (2018 population >= 90,000)
+#' @inheritParams resolve_countries_arg
 #'
 #' @return A character vector of ISO3 codes.
 #'
 #' @export
-who_member_states <- function(include = c("all", "small", "large")) {
+who_member_states <- function(include = c("all", "small", "large"),
+                              countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
   include <- rlang::arg_match(include)
-  x <- whoville::countries[["iso3"]]
+  x <- countries_use[["iso3"]]
   if (include == "small") {
-    x <- x[is_who_member_small(x)]
+    x <- x[is_who_member_small(x, countries_manual = countries_use)]
   } else if (include == "large") {
-    x <- x[is_who_member_large(x)]
+    x <- x[is_who_member_large(x, countries_manual = countries_use)]
   } else {
-    x <- x[is_who_member(x)]
+    x <- x[is_who_member(x, countries_manual = countries_use)]
   }
   x
 }
@@ -87,9 +100,11 @@ who_member_states <- function(include = c("all", "small", "large")) {
 #' @return Logical vector.
 #'
 #' @export
-is_oecd_member <- function(iso3) {
-  members <- whoville::countries[["oecd_member"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_oecd_member <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "oecd_member"))
+  members <- countries_use[["oecd_member"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -98,12 +113,15 @@ is_oecd_member <- function(iso3) {
 #' `oecd_member_states()` returns ISO3 codes for OECD member states. Useful to
 #' expand data frames to explicitly include missing data for countries.
 #'
+#' @inheritParams resolve_countries_arg
 #' @inherit who_member_states return
 #'
 #' @export
-oecd_member_states <- function() {
-  x <- whoville::countries[["iso3"]]
-  x[is_oecd_member(x)]
+oecd_member_states <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
+  x <- countries_use[["iso3"]]
+  x[is_oecd_member(x, countries_manual = countries_use)]
 }
 
 #' Check GBD high-income classification status from ISO3 codes.
@@ -117,9 +135,11 @@ oecd_member_states <- function() {
 #' @return Logical vector.
 #'
 #' @export
-is_gbd_high_income <- function(iso3) {
-  members <- whoville::countries[["gbd_high_income"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_gbd_high_income <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "gbd_high_income"))
+  members <- countries_use[["gbd_high_income"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -130,12 +150,15 @@ is_gbd_high_income <- function(iso3) {
 #' Health Metrics and Evaluation. Useful to expand data frames to explicitly
 #' include missing data for countries.
 #'
+#' @inheritParams resolve_countries_arg
 #' @inherit who_member_states return
 #'
 #' @export
-gbd_high_income_states <- function() {
-  x <- whoville::countries[["iso3"]]
-  x[is_gbd_high_income(x)]
+gbd_high_income_states <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
+  x <- countries_use[["iso3"]]
+  x[is_gbd_high_income(x, countries_manual = countries_use)]
 }
 
 #' Get ISO3 codes for least-developed countries.
@@ -144,12 +167,15 @@ gbd_high_income_states <- function() {
 #' developed by the United Nations. Useful to expand data frames to explicitly
 #' include missing data for countries.
 #'
+#' @inheritParams resolve_countries_arg
 #' @inherit who_member_states return
 #'
 #' @export
-un_ldcs <- function() {
-  x <- whoville::countries[["iso3"]]
-  x[is_un_ldc(x)]
+un_ldcs <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
+  x <- countries_use[["iso3"]]
+  x[is_un_ldc(x, countries_manual = countries_use)]
 }
 
 #' Check least-developed country classification status from ISO3 codes.
@@ -163,9 +189,11 @@ un_ldcs <- function() {
 #' @return Logical vector.
 #'
 #' @export
-is_un_ldc <- function(iso3) {
-  members <- whoville::countries[["un_ldc"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_un_ldc <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "un_ldc"))
+  members <- countries_use[["un_ldc"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -175,12 +203,15 @@ is_un_ldc <- function(iso3) {
 #' developing countries by the United Nations. Useful to expand data frames to explicitly
 #' include missing data for countries.
 #'
+#' @inheritParams resolve_countries_arg
 #' @inherit who_member_states return
 #'
 #' @export
-un_lldcs <- function() {
-  x <- whoville::countries[["iso3"]]
-  x[is_un_lldc(x)]
+un_lldcs <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
+  x <- countries_use[["iso3"]]
+  x[is_un_lldc(x, countries_manual = countries_use)]
 }
 
 #' Check land-locked developing country classification status from ISO3 codes.
@@ -194,9 +225,11 @@ un_lldcs <- function() {
 #' @return Logical vector.
 #'
 #' @export
-is_un_lldc <- function(iso3) {
-  members <- whoville::countries[["un_lldc"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_un_lldc <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "un_lldc"))
+  members <- countries_use[["un_lldc"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
@@ -206,12 +239,15 @@ is_un_lldc <- function(iso3) {
 #' developing states by the United Nations. Useful to expand data frames to explicitly
 #' include missing data for countries.
 #'
+#' @inheritParams resolve_countries_arg
 #' @inherit who_member_states return
 #'
 #' @export
-un_sids <- function() {
-  x <- whoville::countries[["iso3"]]
-  x[is_un_sid(x)]
+un_sids <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3"))
+  x <- countries_use[["iso3"]]
+  x[is_un_sid(x, countries_manual = countries_use)]
 }
 
 #' Check small island developing state status from ISO3 codes.
@@ -225,8 +261,10 @@ un_sids <- function() {
 #' @return Logical vector.
 #'
 #' @export
-is_un_sid <- function(iso3) {
-  members <- whoville::countries[["un_sids"]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+is_un_sid <- function(iso3, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c("iso3", "un_sids"))
+  members <- countries_use[["un_sids"]]
+  idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }

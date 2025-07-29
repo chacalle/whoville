@@ -4,7 +4,13 @@
 \alias{wb_ig_years}
 \title{Years of WB IG classifications available}
 \usage{
-wb_ig_years()
+wb_ig_years(countries_manual = NULL)
+}
+\arguments{
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \description{
 \code{wb_ig_years()} provides a numeric vector of all years of World Bank Income

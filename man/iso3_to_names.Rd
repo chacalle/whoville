@@ -8,7 +8,8 @@ iso3_to_names(
   iso3,
   org = c("who", "un"),
   type = c("short", "formal"),
-  language = c("en", "es", "ru", "ar", "zh", "fr")
+  language = c("en", "es", "ru", "ar", "zh", "fr"),
+  countries_manual = NULL
 )
 }
 \arguments{
@@ -23,6 +24,11 @@ either "who" (default) or "un".}
 Should be specified using the ISO2 language code. Defaults to "en", but matching
 available for all 6 official WHO languages. Possible values are "en", "es",
 "ar", "fr", "ru", and "zh".}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 Character vector.

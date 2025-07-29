@@ -25,6 +25,7 @@
 #'     in matching names. See [stringdist::stringdist()] for all possible methods.
 #' @param p A numeric value between 0 and 0.25 specifying the penalty factor
 #'     for Jaro-Winkler distance. Ignored if method is not "jw".
+#' @inheritParams resolve_countries_arg
 #'
 #' @return A vector of country codes matched to the names.
 #'
@@ -35,8 +36,11 @@ names_to_code <- function(names,
                           ignore_case = T,
                           fuzzy_matching = c("yes", "no", "user_input"),
                           method = "jw",
-                          p = 0.1) {
+                          p = 0.1,
+                          countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   rlang::arg_match(type, country_code_types())
+  check_cols_exists(countries_use, cols = c(type))
   language <- rlang::arg_match(language)
   check_bool(ignore_case)
   fuzzy_matching <- assert_fuzzy_matching(fuzzy_matching)
@@ -44,7 +48,7 @@ names_to_code <- function(names,
   assert_p(p)
 
   df <- dplyr::select(
-    whoville::countries[, name_cols()],
+    countries_use[, name_cols()],
     dplyr::ends_with(paste0("_", language))
   )
 
@@ -89,7 +93,9 @@ names_to_iso3 <- function(names,
                           ignore_case = T,
                           fuzzy_matching = c("yes", "no", "user_input"),
                           method = "jw",
-                          p = 0.1) {
+                          p = 0.1,
+                          countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   names_to_code(
     names = names,
     type = "iso3",
@@ -97,7 +103,8 @@ names_to_iso3 <- function(names,
     ignore_case = ignore_case,
     fuzzy_matching = fuzzy_matching,
     method = method,
-    p = p
+    p = p,
+    countries_manual = countries_use
   )
 }
 
@@ -107,13 +114,17 @@ name_matching <- function(name,
                           method,
                           p,
                           fm,
-                          type) {
+                          type,
+                          countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  check_cols_exists(countries_use, cols = c(type))
+
   scrs <- apply(df, 2, stringdist::stringdist, name, method = method, p = p)
   scr_mins <- apply(scrs, 1, function(x) suppressWarnings(min(x, na.rm = T)))
   row <- which.min(scr_mins)
   col <- apply(scrs, 1, which.min)[[row]]
   fit <- df[row, col]
-  fuzz_result <- whoville::countries[[type]][row]
+  fuzz_result <- countries_use[[type]][row]
   if (min(scr_mins) != 0) {
     if (fm == "no") {
       result <- NA_character_
@@ -130,7 +141,7 @@ name_matching <- function(name,
             toupper(type),
             name
           ))
-          if (result %in% c("N/A", whoville::countries[[type]])) {
+          if (result %in% c("N/A", countries_use[[type]])) {
             check <- F
             if (result == "N/A") result <- NA_character_
           } else {

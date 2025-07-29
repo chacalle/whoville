@@ -11,7 +11,8 @@ iso3_to_regions(
     "un_desa_subregion", "wb_region", "wb_ig"),
   year = max(wb_ig_years()),
   name = FALSE,
-  language = c("en", "es", "ru", "ar", "zh", "fr")
+  language = c("en", "es", "ru", "ar", "zh", "fr"),
+  countries_manual = NULL
 )
 }
 \arguments{
@@ -30,6 +31,11 @@ return official regional name instead of code.}
 \item{language}{For \code{"un_region"}, \code{"un_subregion"}, and \code{"un_intermediate_region"}
 only if returning name. A character value specifying the language of the
 country names. Should be specified using the ISO2 language code.}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 Character vector.

@@ -4,10 +4,15 @@
 \alias{is_who_member_large}
 \title{Get large state membership status from ISO3 codes.}
 \usage{
-is_who_member_large(iso3)
+is_who_member_large(iso3, countries_manual = NULL)
 }
 \arguments{
 \item{iso3}{Character vector of ISO3 codes.}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 Logical vector.

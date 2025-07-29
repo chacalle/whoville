@@ -17,6 +17,7 @@
 #' @param language For `"un_region"`, `"un_subregion"`, and `"un_intermediate_region"`
 #'     only if returning name. A character value specifying the language of the
 #'     country names. Should be specified using the ISO2 language code.
+#' @inheritParams resolve_countries_arg
 #'
 #' @return Character vector.
 #'
@@ -25,7 +26,10 @@ iso3_to_regions <- function(iso3,
                             region = c("who_region", "un_region", "un_subregion", "un_intermediate_region", "sdg_region", "sdg_subregion", "gbd_region", "gbd_subregion", "un_desa_region", "un_desa_subregion", "wb_region", "wb_ig"),
                             year = max(wb_ig_years()),
                             name = FALSE,
-                            language = c("en", "es", "ru", "ar", "zh", "fr")) {
+                            language = c("en", "es", "ru", "ar", "zh", "fr"),
+                            countries_manual = NULL) {
+
+  countries_use <- resolve_countries_arg(countries_manual)
   region <- rlang::arg_match(region)
 
   if (region == "wb_ig") {
@@ -38,8 +42,9 @@ iso3_to_regions <- function(iso3,
     mtch <- region
   }
 
-  regions <- whoville::countries[[mtch]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+  check_cols_exists(countries_use, cols = c("iso3", mtch))
+  regions <- countries_use[[mtch]]
+  idx <- match(iso3, countries_use[["iso3"]])
   regions[idx]
 }
 
@@ -51,13 +56,17 @@ iso3_to_regions <- function(iso3,
 #' @param codes Character vector of country codes.
 #' @param type A character value specifying the type of country code supplied.
 #' All possible values available through `country_code_types()`.
+#' @inheritParams resolve_countries_arg
 #'
 #' @return Logical vector.
 #'
 #' @export
-valid_codes <- function(codes, type = "iso3") {
+valid_codes <- function(codes, type = "iso3", countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   rlang::arg_match(type, country_code_types())
-  codes %in% whoville::countries[["type"]]
+
+  check_cols_exists(countries_use, cols = type)
+  codes %in% countries_use[["type"]]
 }
 
 #' Get country names from ISO3 country codes.
@@ -75,6 +84,7 @@ valid_codes <- function(codes, type = "iso3") {
 #' Should be specified using the ISO2 language code. Defaults to "en", but matching
 #' available for all 6 official WHO languages. Possible values are "en", "es",
 #' "ar", "fr", "ru", and "zh".
+#' @inheritParams resolve_countries_arg
 #'
 #' @return Character vector.
 #'
@@ -82,7 +92,9 @@ valid_codes <- function(codes, type = "iso3") {
 iso3_to_names <- function(iso3,
                           org = c("who", "un"),
                           type = c("short", "formal"),
-                          language = c("en", "es", "ru", "ar", "zh", "fr")) {
+                          language = c("en", "es", "ru", "ar", "zh", "fr"),
+                          countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   org <- rlang::arg_match(org)
   language <- rlang::arg_match(language)
   if (org == "who") {
@@ -90,9 +102,10 @@ iso3_to_names <- function(iso3,
     org <- paste(org, type, sep = "_")
   }
 
+  check_cols_exists(countries_use, cols = "iso3")
   rgx <- sprintf("^%s_name_%s$", org, language)
-  names <- whoville::countries[[which(grepl(rgx, names(whoville::countries)))]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+  names <- countries_use[[which(grepl(rgx, names(countries_use)))]]
+  idx <- match(iso3, countries_use[["iso3"]])
   names[idx]
 }
 
@@ -104,15 +117,19 @@ iso3_to_names <- function(iso3,
 #' @param iso3 Character vector of ISO3 codes.
 #' @param type A character value specifying the type of country code to return.
 #' All possible values available through `country_code_types()`.
+#' @inheritParams resolve_countries_arg
 #'
 #' @return Character vector.
 #'
 #' @export
-iso3_to_codes <- function(iso3, type) {
+iso3_to_codes <- function(iso3, type, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   rlang::arg_match(type, country_code_types())
 
-  codes <- whoville::countries[[type]]
-  idx <- match(iso3, whoville::countries[["iso3"]])
+  check_cols_exists(countries_use, cols = c("iso3", type))
+
+  codes <- countries_use[[type]]
+  idx <- match(iso3, countries_use[["iso3"]])
   codes[idx]
 }
 
@@ -126,10 +143,13 @@ iso3_to_codes <- function(iso3, type) {
 #' @return Character vector.
 #'
 #' @export
-codes_to_iso3 <- function(codes, type) {
+codes_to_iso3 <- function(codes, type, countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
   rlang::arg_match(type, country_code_types())
 
-  iso3 <- whoville::countries[["iso3"]]
-  idx <- match(codes, whoville::countries[[type]])
+  check_cols_exists(countries_use, cols = c("iso3", type))
+
+  iso3 <- countries_use[["iso3"]]
+  idx <- match(codes, countries_use[[type]])
   iso3[idx]
 }

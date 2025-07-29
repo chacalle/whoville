@@ -4,12 +4,15 @@
 #' `wb_ig_years()` provides a numeric vector of all years of World Bank Income
 #' Group classifications available in the `whoville::countries` data frame.
 #'
+#' @inheritParams resolve_countries_arg
+#'
 #' @examples
 #' wb_ig_years()
 #'
 #' @export
-wb_ig_years <- function() {
-  nms <- names(whoville::countries)
+wb_ig_years <- function(countries_manual = NULL) {
+  countries_use <- resolve_countries_arg(countries_manual)
+  nms <- names(countries_use)
   nms <- nms[grepl("wb_ig_", nms)]
   as.numeric(gsub("[^0-9]", "", nms))
 }

@@ -4,13 +4,18 @@
 \alias{codes_to_iso3}
 \title{Get ISO3 codes from other country codes.}
 \usage{
-codes_to_iso3(codes, type)
+codes_to_iso3(codes, type, countries_manual = NULL)
 }
 \arguments{
 \item{codes}{Character vector of country codes.}
 
 \item{type}{A character value specifying the type of country code to return.
 All possible values available through \code{country_code_types()}.}
+
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 Character vector.

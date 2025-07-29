@@ -4,7 +4,13 @@
 \alias{un_sids}
 \title{Get ISO3 codes for small island developing states.}
 \usage{
-un_sids()
+un_sids(countries_manual = NULL)
+}
+\arguments{
+\item{countries_manual}{Optional argument to directly pass in the countries
+object to use. If specified the object is used, otherwise the
+'whoville.updated.countries' option is used if it is set, and finally
+otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 A character vector of ISO3 codes.
