@@ -66,7 +66,7 @@ valid_codes <- function(codes, type = "iso3", countries_manual = NULL) {
   rlang::arg_match(type, country_code_types())
 
   check_cols_exists(countries_use, cols = type)
-  codes %in% countries_use[["type"]]
+  codes %in% countries_use[[type]]
 }
 
 #' Get country names from ISO3 country codes.
