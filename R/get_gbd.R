@@ -53,9 +53,9 @@ get_gbd_direct <- function(gbd_year = "2021",
   # https://ghdx.healthdata.org/record/ihme-data/gbd-2016-location-hierarchies
 
   temp_z <- tempfile()
-  on.exit(file.remove(temp_z))
-  temp_d <- tempdir()
-  on.exit(unlink(temp_d, recursive = TRUE))
+  temp_d <- tempfile()
+  dir.create(temp_d, recursive = TRUE)
+  on.exit(unlink(c(temp_z, temp_d), recursive = TRUE), add = TRUE)
 
   utils::download.file(url, destfile = temp_z, quiet = TRUE)
 
