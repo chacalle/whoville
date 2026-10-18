@@ -7,6 +7,10 @@
 #'   The reference (old) data frame to compare changes against.
 #' @param col_order \[`character()`\]\cr
 #'   Column order for the returned workbook object.
+#' @param ids \[`character()`\]\cr
+#'   Columns that uniquely identify each row, used to match rows between `new`
+#'   and `old`. Default is 'iso3', since other codes like 'm49' are missing for
+#'   some locations in older versions (e.g. TWN, XKX).
 #'
 #' @returns a named \[`list(2)`\] with 'daff' storing the difference object and
 #' 'wb_daff' storing the `openxlsx2::wbWorkbook` object.
@@ -34,7 +38,8 @@
 #' @export
 compare_countries <- function(new,
                               old,
-                              col_order = c("iso3", "who_member", "who_short_name_en")) {
+                              col_order = c("iso3", "who_member", "who_short_name_en"),
+                              ids = "iso3") {
 
   rlang::check_installed(
     pkg = "daff",
@@ -52,7 +57,9 @@ compare_countries <- function(new,
   cols_dropped <- setdiff(names(old), cols_intersect)
   cols_added <- setdiff(names(new), cols_intersect)
 
+  check_character(ids)
   stopifnot(all(col_order %in% cols_intersect))
+  stopifnot(all(ids %in% cols_intersect))
 
   old <- old %>%
     dplyr::arrange(.data$iso3)
@@ -68,7 +75,7 @@ compare_countries <- function(new,
   countries_diff <- daff::diff_data(
     data_ref = old,
     data = new,
-    ids = c("m49"),
+    ids = ids,
     always_show_order = TRUE,
     show_unchanged = TRUE,
     show_unchanged_columns = TRUE,

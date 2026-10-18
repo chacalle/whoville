@@ -7,7 +7,8 @@
 compare_countries(
   new,
   old,
-  col_order = c("iso3", "who_member", "who_short_name_en")
+  col_order = c("iso3", "who_member", "who_short_name_en"),
+  ids = "iso3"
 )
 }
 \arguments{
@@ -19,6 +20,11 @@ The reference (old) data frame to compare changes against.}
 
 \item{col_order}{[\code{character()}]\cr
 Column order for the returned workbook object.}
+
+\item{ids}{[\code{character()}]\cr
+Columns that uniquely identify each row, used to match rows between \code{new}
+and \code{old}. Default is 'iso3', since other codes like 'm49' are missing for
+some locations in older versions (e.g. TWN, XKX).}
 }
 \value{
 a named [\code{list(2)}] with 'daff' storing the difference object and

@@ -77,9 +77,41 @@ openxlsx2::wb_save(
 )
 
 
+# Compare to key tagged versions ------------------------------------------
+
+# permanent comparisons against the `countries` object in key tagged versions
+# - add new tags here to keep comparing against them in future updates
+# - v0.1.7: final version in the original 'gpw13/whoville' repository
+# - v0.1.7.9000: first updated version (2025-07-29), used in analyses after the
+#   IDN WHO region change
+tags_compare <- c("v0.1.7", "v0.1.7.9000")
+
+for (tag in tags_compare) {
+  # read the `countries` object saved in the tagged version
+  path_tag <- tempfile(fileext = ".rda")
+  system2(
+    command = "git",
+    args = c("-C", here::here(), "show", stringr::str_glue("{tag}:data/countries.rda")),
+    stdout = path_tag
+  )
+  env_tag <- new.env()
+  load(path_tag, envir = env_tag)
+
+  diff_against_tag <- compare_countries(
+    new = countries_new_xmart,
+    old = env_tag$countries
+  )
+  openxlsx2::wb_save(
+    wb = diff_against_tag$wb_daff,
+    file = stringr::str_glue("{here::here()}/data-raw/countries_diff_against_{tag}.xlsx")
+  )
+}
+
+
 # Save the new `countries` object -----------------------------------------
 
 # Manually run these lines when satisfied with the changes summarized above
+# - the `source_log` attribute from `make_countries()` is saved with the object
 # - also updates the internal `source_versions` object documenting each source version
 if (FALSE) {
   countries <- countries_new_xmart
