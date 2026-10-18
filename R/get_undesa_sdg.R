@@ -11,13 +11,14 @@
 #' @param url_file \[`character(1)`\]\cr
 #'   Url to download the 'Locations (XLSX)' file from, the 'DB' sheet is read in.
 #'   This link changes for every WPP revision year.
-#' @param url_wpp \[`character(1)`\]\cr
-#'   Url to the WPP home page. This is used to double check whether a more
-#'   recent `url_file` link is likely available.
+#' @param url_sources \[`character(1)`\]\cr
+#'   Url to the UN Data Portal API 'sources' endpoint, which lists each WPP
+#'   revision and its year. This is used to check whether a more recent WPP
+#'   revision than `wpp_year` is available.
 #' @param wpp_year \[`numeric(1)`\]\cr
-#'   The WPP year that should be expected to be found on the WPP home page.
-#'   This is used to double check whether a more recent `url_file` link is
-#'   likely available.
+#'   The WPP revision year of the `url_file` link. An error is thrown if
+#'   `url_sources` lists a more recent WPP revision, since a new revision
+#'   should be reviewed before it is used.
 #' @param dat_undesa_sdg \[`data.frame(1)`\]\cr
 #'   The returned object from `get_undesa_sdg` to be formatted to match the
 #'   `whoville::countries` object formatting.
@@ -46,27 +47,20 @@
 #'
 #' @rdname undesa_sdg
 get_undesa_sdg_direct <- function(url_file = "https://population.un.org/wpp/assets/Excel%20Files/4_Metadata/WPP2024_F01_LOCATIONS.xlsx",
-                                  url_wpp = "https://population.un.org/wpp/",
+                                  url_sources = "https://population.un.org/dataportalapi/api/v1/sources",
                                   wpp_year = 2024) {
 
   message("Getting location metadata from UN DESA & SDG")
   check_string(url_file, allow_empty = FALSE)
-  check_string(url_wpp, allow_empty = FALSE)
+  check_string(url_sources, allow_empty = FALSE)
   check_number_whole(wpp_year, allow_empty = FALSE)
 
-  # check that a more recent WPP version is not available
-  rlang::check_installed(
-    pkg = "rvest",
-    reason = "to scrape the WPP webpage"
-  )
-  webpage <- rvest::read_html(url_wpp)
-  header <- rvest::html_elements(webpage, ".header") %>%
-    rvest::html_text2()
-  wpp_year_found <- header %>%
-    stringr::str_extract(pattern = "\\d\\d\\d\\d") %>%
-    as.numeric()
-  if (!identical(wpp_year, wpp_year_found)) {
-    stop(stringr::str_glue("The WPP year found in the `url_wpp` header ('{wpp_year_found}') does not match the expected `wpp_year` ('{wpp_year}'). May need to update the `url_file` link."))
+  # check that a more recent WPP revision is not available
+  wpp_year_latest <- find_wpp_latest_year(url_sources)
+  if (is.na(wpp_year_latest)) {
+    warning(stringr::str_glue("Could not read the WPP revisions from `url_sources` ('{url_sources}'), so could not check whether a more recent version than `wpp_year` ('{wpp_year}') is available."))
+  } else if (wpp_year_latest > wpp_year) {
+    stop(stringr::str_glue("A more recent WPP revision ('{wpp_year_latest}') is listed in `url_sources` than the expected `wpp_year` ('{wpp_year}'). Update the `url_file` link from the WPP downloads page and `wpp_year`."))
   }
 
   message("- downloading 'Locations (XLSX)' file from '", url_file, "'")
@@ -77,6 +71,44 @@ get_undesa_sdg_direct <- function(url_file = "https://population.un.org/wpp/asse
   dat_undesa_sdg <- readxl::read_xlsx(path = temp, sheet = "DB")
 
   return(dat_undesa_sdg)
+}
+
+# Find the most recent WPP revision year listed in the UN Data Portal API
+# - the 'sources' endpoint has a row for each revision of each UN DESA product
+# - returns `NA` if the API can not be read or lists no WPP revisions
+#' @noRd
+find_wpp_latest_year <- function(url_sources) {
+  rlang::check_installed(
+    pkg = "httr2",
+    reason = "to read the WPP revisions from the UN Data Portal API"
+  )
+
+  # the endpoint is paginated, so follow 'nextPage' until all pages are read
+  sources <- list()
+  url_page <- url_sources
+  while (!is.null(url_page)) {
+    page <- tryCatch(
+      httr2::request(url_page) %>%
+        httr2::req_perform() %>%
+        httr2::resp_body_json(simplifyVector = TRUE),
+      error = function(e) NULL
+    )
+    if (is.null(page)) {
+      return(NA_real_)
+    }
+    sources <- c(sources, list(page$data))
+    url_page <- page$nextPage
+  }
+
+  wpp_years <- sources %>%
+    dplyr::bind_rows() %>%
+    dplyr::filter(.data$name == "World Population Prospects") %>%
+    dplyr::pull("sourceYear")
+  if (length(wpp_years) == 0) {
+    return(NA_real_)
+  }
+
+  return(max(wpp_years))
 }
 
 #' @rdname undesa_sdg
