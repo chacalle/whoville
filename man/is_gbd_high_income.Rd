@@ -11,7 +11,7 @@ is_gbd_high_income(iso3, countries_manual = NULL)
 
 \item{countries_manual}{Optional argument to directly pass in the countries
 object to use. If specified the object is used, otherwise the
-'whoville.updated.countries' option is used if it is set, and finally
+'whoville.option.countries' option is used if it is set, and finally
 otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
@@ -19,6 +19,7 @@ Logical vector.
 }
 \description{
 \code{is_gbd_high_income()} takes in a vector of ISO3 codes and returns a logical vector
-on whether that country is classified as high-income in the 2019 Global Burden
-of Disease released by the Institute for Health Metrics and Evaluation.
+on whether that country is in the 'High-income' GBD region (\code{gbd_region_name_en})
+of the Global Burden of Disease released by the Institute for Health Metrics
+and Evaluation.
 }

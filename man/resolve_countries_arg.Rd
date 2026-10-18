@@ -10,7 +10,7 @@ resolve_countries_arg(countries_manual)
 \arguments{
 \item{countries_manual}{Optional argument to directly pass in the countries
 object to use. If specified the object is used, otherwise the
-'whoville.updated.countries' option is used if it is set, and finally
+'whoville.option.countries' option is used if it is set, and finally
 otherwise the built in \code{whoville::countries} object is used.}
 }
 \description{

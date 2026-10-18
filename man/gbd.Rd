@@ -7,25 +7,33 @@
 Burden of Disease (GBD) location hierarchy information}
 \usage{
 get_gbd_direct(
-  gbd_year = "2021",
+  gbd_year = "2023",
+  path = NULL,
   url = c(`2021` =
     "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2021_CODEBOOK.zip",
     `2019` =
     "http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2019_CODEBOOK.zip"),
   zip_fname = c(`2021` = "IHME_GBD_2021_HIERARCHIES_Y2024M05D16.XLSX", `2019` =
-    "IHME_GBD_2019_GBD_LOCATION_HIERARCHY_Y2022M06D29.XLSX")
+    "IHME_GBD_2019_GBD_LOCATION_HIERARCHY_Y2022M06D29.XLSX"),
+  location_set_version_id = c(`2023` = 1511, `2021` = 1188),
+  url_ghdx = "https://ghdx.healthdata.org"
 )
 
 format_gbd_direct(
   dat,
   map_iso3_manual = dplyr::tibble(`Location Name` = c("Taiwan (Province of China)",
-    "Netherlands", "C\\\\u00f4te d\\\\'Ivoire", "Palestine", "United Kingdom"), iso3 =
-    c("TWN", "NLD", "CIV", "PSE", "GBR"))
+    "Taiwan", "Netherlands", "C\\\\u00f4te d\\\\'Ivoire", "Palestine", "United Kingdom"),
+    iso3 = c("TWN", "TWN", "NLD", "CIV", "PSE", "GBR"))
 )
 }
 \arguments{
 \item{gbd_year}{[\code{character(1)}]\cr
 String specifying the GBD year/version to get}
+
+\item{path}{[\code{character(1)}]\cr
+Path to a manually downloaded location hierarchy xlsx file for \code{gbd_year},
+the first sheet is read in. Required for GBD versions without a direct
+download in \code{url}. Default is NULL to download the file from \code{url}.}
 
 \item{url}{[\code{character()}]\cr
 Named vector specifying GBD year/version specific urls to download zip
@@ -34,6 +42,16 @@ files from}
 \item{zip_fname}{[\code{character()}]\cr
 Named vector specifying GBD year/version specific file name to read from
 the downloaded zip file}
+
+\item{location_set_version_id}{[\code{numeric()}]\cr
+Named vector specifying the GBD year/version specific 'Location Set Version
+ID' of the GBD reporting hierarchy, e.g. 1511 is 'GBD 2023 Reporting'. Some
+hierarchy files include many location sets, only this one is kept. If
+\code{gbd_year} is not included, all location sets are returned.}
+
+\item{url_ghdx}{[\code{character(1)}]\cr
+Url to the GHDx website, used to check whether a page exists for a more
+recent GBD version (\code{{url_ghdx}/gbd-{year}}).}
 
 \item{dat}{[\code{data.frame(1)}]\cr
 The original GBD location hierarchy to be formatted to match the
@@ -49,12 +67,25 @@ from the specified zip/xlsx file. \verb{format_gbd()_direct} returns a [\code{ti
 with a row for each GBD level 3 location and the mapped \code{iso3} code.
 }
 \description{
-Get/Format Institute for Health Metrics and Evaluation (IHME) Global
-Burden of Disease (GBD) location hierarchy information
+Location hierarchies are only available as a direct download for some GBD
+versions (2021 and 2019). Other versions need to be downloaded from the
+GHDx record page after logging in, and the file passed with \code{path}:
+\itemize{
+\item GBD 2023: \url{https://ghdx.healthdata.org/record/gbd-2023-cause-rei-and-location-hierarchies}
+}
+
+\code{get_gbd_direct()} warns if a GHDx page exists for a more recent GBD version
+than \code{gbd_year}.
 }
 \examples{
 \dontrun{
-dat_gbd <- get_gbd_direct("2021") \%>\%
+dat_gbd <- get_gbd_direct(gbd_year = "2021") \%>\%
+  format_gbd_direct()
+
+dat_gbd <- get_gbd_direct(
+  gbd_year = "2023",
+  path = "IHME_GBD_2023_HIERARCHIES_Y2025M10D23.XLSX"
+) \%>\%
   format_gbd_direct()
 }
 

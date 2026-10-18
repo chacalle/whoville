@@ -10,6 +10,7 @@ make_countries(
   sdg_use_xmart = TRUE,
   include_undesa = FALSE,
   include_gbd = FALSE,
+  gbd_path = NULL,
   include_oecd = FALSE
 )
 }
@@ -35,6 +36,13 @@ for when users are attempting to make their own updated object.}
 Whether to include the gbd regions when making the countries object.
 Default is FALSE to enable quicker and less buggy creation of the object
 for when users are attempting to make their own updated object.}
+
+\item{gbd_path}{[\code{character(1)}]\cr
+Path to a manually downloaded GBD location hierarchy xlsx file, see
+\code{\link[=get_gbd_direct]{get_gbd_direct()}}. Only used if \code{include_gbd = TRUE}. Default is NULL to
+use the gbd columns from the built in \code{whoville::countries} object, since
+recent GBD location hierarchies can not be downloaded without logging in.
+A warning is given if a more recent GBD version may be available.}
 
 \item{include_oecd}{[\code{logical(1)}]\cr
 Whether to include oecd membership when making the countries object.

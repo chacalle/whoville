@@ -10,7 +10,7 @@ Economic and Social Affairs (UN DESA) and the Sustainable Development Goals (SDG
 get_undesa_sdg_direct(
   url_file =
     "https://population.un.org/wpp/assets/Excel\%20Files/4_Metadata/WPP2024_F01_LOCATIONS.xlsx",
-  url_wpp = "https://population.un.org/wpp/",
+  url_sources = "https://population.un.org/dataportalapi/api/v1/sources",
   wpp_year = 2024
 )
 
@@ -23,14 +23,15 @@ format_sdg_xmart(dat_ref_groups_current)
 Url to download the 'Locations (XLSX)' file from, the 'DB' sheet is read in.
 This link changes for every WPP revision year.}
 
-\item{url_wpp}{[\code{character(1)}]\cr
-Url to the WPP home page. This is used to double check whether a more
-recent \code{url_file} link is likely available.}
+\item{url_sources}{[\code{character(1)}]\cr
+Url to the UN Data Portal API 'sources' endpoint, which lists each WPP
+revision and its year. This is used to check whether a more recent WPP
+revision than \code{wpp_year} is available.}
 
 \item{wpp_year}{[\code{numeric(1)}]\cr
-The WPP year that should be expected to be found on the WPP home page.
-This is used to double check whether a more recent \code{url_file} link is
-likely available.}
+The WPP revision year of the \code{url_file} link. An error is thrown if
+\code{url_sources} lists a more recent WPP revision, since a new revision
+should be reviewed before it is used.}
 
 \item{dat_undesa_sdg}{[\code{data.frame(1)}]\cr
 The returned object from \code{get_undesa_sdg} to be formatted to match the

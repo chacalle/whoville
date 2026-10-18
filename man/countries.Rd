@@ -5,7 +5,7 @@
 \alias{countries}
 \title{Country metadata from the WHO, UN, and WB.}
 \format{
-A data frame with 249 rows and 105 variables:
+A data frame with 249 rows and 106 variables:
 \describe{
 \item{iso3}{\href{https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3}{ISO3 code.}}
 \item{iso2}{\href{https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2}{ISO2 code.}}
@@ -112,24 +112,25 @@ A data frame with 249 rows and 105 variables:
 \item{wb_ig_2022}{World Bank Income Group code, 2022 (FY 2024) classification.}
 \item{wb_ig_2023}{World Bank Income Group code, 2023 (FY 2025) classification.}
 \item{wb_ig_2024}{World Bank Income Group code, 2024 (FY 2026) classification.}
+\item{wb_ig_2025}{World Bank Income Group code, 2025 (FY 2027) classification.}
 }
+
+Made with \code{data-raw/countries.R} using \code{\link[=make_countries]{make_countries()}}, all sources
+accessed October 18 2026. The version of each source is also recorded in the
+internal \code{whoville:::source_versions} object.
 }
 \source{
-\href{https://portal-uat.who.int/xmart4/REFMART}{World Health Organization country reference table, accessed July 4 2022.}
+\href{https://xmart-api-public.who.int/REFMART/REF_COUNTRY}{World Health Organization xMart REFMART country reference table (location codes, WHO names, membership and regions).}
 
-\href{https://unstats.un.org/unsd/methodology/m49/overview/}{United Nations Statistics Division, Country or Area Codes for Statistical Use tables; accessed August 15 2020.}
+\href{https://xmart-api-public.who.int/REFMART/REF_GROUPS_FULL}{World Health Organization xMart REFMART groups tables: World Bank income groups (fiscal years 1989 - 2027) and regions, UNSD least developed countries, landlocked developing countries and small island developing states, and SDG regions.}
 
-\href{https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups}{World Bank income groups, fiscal years 1989 - 2021, and regions, accessed August 23 2022.}
+\href{https://unstats.un.org/unsd/methodology/m49/overview/}{United Nations Statistics Division, Standard country or area codes for statistical use (M49).}
 
-\href{https://www.oecd.org/about/members-and-partners/}{Organisation for Economic Co-operation and Development membership list, accessed 1 February 2021.}
+\href{https://population.un.org/wpp/}{United Nations Department of Economic and Social Affairs, Population Division, World Population Prospects 2024 locations file (UN DESA regions).}
 
-\href{http://ghdx.healthdata.org/gbd-2019}{Institute for Health Metrics and Evaluation Global Burden of Disease 2019 Socio-Demographic Index data, accessed June 24 2022.}
+\href{https://ghdx.healthdata.org/record/gbd-2023-cause-rei-and-location-hierarchies}{Institute for Health Metrics and Evaluation, Global Burden of Disease 2023 location hierarchy ('GBD 2023 Reporting' location set).}
 
-\href{https://www.un.org/development/desa/dpad/wp-content/uploads/sites/45/publication/ldc_list.pdf}{United Nations Committee for Development Policy, list of least developed countries, accessed 16 February 2021.}
-
-\href{https://www.un.org/development/desa/pd/sites/www.un.org.development.desa.pd/files/aggregates_correspondence_table_2020_1.xlsx}{United Nations Department of Economic and Social Affairs, Population Division (2020). International Migrant Stock 2020.}
-
-\href{http://ghdx.healthdata.org/sites/default/files/ihme_query_tool/IHME_GBD_2019_CODEBOOK.zip}{Global Burden of Disease 2019 country and regional classifications, Institute for Health Metrics and Evaluation, accessed July 4 2022.}
+\href{https://sdmx.oecd.org/public/rest/dataflow/all}{Organisation for Economic Co-operation and Development SDMX API (member countries listed in the CPI country weights dataflow).}
 }
 \usage{
 countries

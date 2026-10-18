@@ -44,5 +44,5 @@ get_who_public_xmart(url = url)
 \seealso{
 \code{\link[=format_who_xmart_ref_country]{format_who_xmart_ref_country()}}
 
-\code{\link[xmart4:xmart4-package]{xmart4::xmart4()}}
+\code{\link[xmart4:xmart4]{xmart4::xmart4()}}
 }

@@ -13,7 +13,7 @@ get_wb_ig_direct(
   url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
   sheet = "Country Analytical History",
   skip_years = 5,
-  skip_data = 10
+  skip_data = 6
 )
 
 get_wb_reg_direct(

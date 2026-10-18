@@ -3,7 +3,7 @@
 #'
 #' @param countries_manual Optional argument to directly pass in the countries
 #'     object to use. If specified the object is used, otherwise the
-#'     'whoville.updated.countries' option is used if it is set, and finally
+#'     'whoville.option.countries' option is used if it is set, and finally
 #'     otherwise the built in `whoville::countries` object is used.
 #'
 #' @examples

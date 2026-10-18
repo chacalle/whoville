@@ -9,15 +9,15 @@ gbd_high_income_states(countries_manual = NULL)
 \arguments{
 \item{countries_manual}{Optional argument to directly pass in the countries
 object to use. If specified the object is used, otherwise the
-'whoville.updated.countries' option is used if it is set, and finally
+'whoville.option.countries' option is used if it is set, and finally
 otherwise the built in \code{whoville::countries} object is used.}
 }
 \value{
 A character vector of ISO3 codes.
 }
 \description{
-\code{gbd_high_income_states()} returns ISO3 codes for states classified as high
-income in the 2019 Global Burden of Disease released by the Institute for
+\code{gbd_high_income_states()} returns ISO3 codes for states in the 'High-income'
+GBD region of the Global Burden of Disease released by the Institute for
 Health Metrics and Evaluation. Useful to expand data frames to explicitly
 include missing data for countries.
 }
