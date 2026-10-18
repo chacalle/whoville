@@ -72,8 +72,10 @@ openxlsx2::wb_save(
 
 # Save the new `countries` object -----------------------------------------
 
-# Manually run the final two lines when satisfied with the changes summarized above
+# Manually run these lines when satisfied with the changes summarized above
+# - also updates the internal `source_versions` object documenting each source version
 if (FALSE) {
   countries <- countries_new_xmart
   usethis::use_data(countries, overwrite = TRUE)
+  source(here::here("data-raw/source_versions.R"))
 }
