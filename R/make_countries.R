@@ -17,6 +17,12 @@
 #'   Whether to include the gbd regions when making the countries object.
 #'   Default is FALSE to enable quicker and less buggy creation of the object
 #'   for when users are attempting to make their own updated object.
+#' @param gbd_path \[`character(1)`\]\cr
+#'   Path to a manually downloaded GBD location hierarchy xlsx file, see
+#'   [get_gbd_direct()]. Only used if `include_gbd = TRUE`. Default is NULL to
+#'   use the gbd columns from the built in `whoville::countries` object, since
+#'   recent GBD location hierarchies can not be downloaded without logging in.
+#'   A warning is given if a more recent GBD version may be available.
 #' @param include_oecd \[`logical(1)`\]\cr
 #'   Whether to include oecd membership when making the countries object.
 #'   Default is FALSE to enable quicker and less buggy creation of the object
@@ -49,6 +55,7 @@ make_countries <- function(wb_use_xmart = TRUE,
                            sdg_use_xmart = TRUE,
                            include_undesa = FALSE,
                            include_gbd = FALSE,
+                           gbd_path = NULL,
                            include_oecd = FALSE) {
 
   check_bool(wb_use_xmart)
@@ -57,6 +64,7 @@ make_countries <- function(wb_use_xmart = TRUE,
 
   check_bool(include_undesa)
   check_bool(include_gbd)
+  check_string(gbd_path, allow_empty = FALSE, allow_null = TRUE)
   check_bool(include_oecd)
 
   dat_who_ref_country <- get_who_public_xmart(
@@ -128,9 +136,22 @@ make_countries <- function(wb_use_xmart = TRUE,
 
   dat_gbd <- NULL
   if (include_gbd) {
-    # TODO: automatically check if a more recent GBD year is available
-    dat_gbd <- get_gbd_direct() %>%
-      format_gbd_direct()
+    gbd_year <- source_versions %>%
+      dplyr::filter(stringr::str_detect(.data$source, "^IHME GBD")) %>%
+      dplyr::pull("version")
+
+    if (is.null(gbd_path)) {
+      # recent GBD location hierarchies require logging in to download, so use
+      # the gbd columns already in the built in `countries` object
+      message("Using GBD ", gbd_year, " location metadata from the built in `whoville::countries` object")
+      warn_if_newer_gbd(gbd_year = gbd_year, url_ghdx = "https://ghdx.healthdata.org")
+      dat_gbd <- whoville::countries %>%
+        dplyr::filter(!is.na(.data$gbd_code)) %>%
+        dplyr::select("iso3", dplyr::starts_with("gbd_"))
+    } else {
+      dat_gbd <- get_gbd_direct(gbd_year = gbd_year, path = gbd_path) %>%
+        format_gbd_direct()
+    }
   }
 
   oecd <- NULL

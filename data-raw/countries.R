@@ -11,6 +11,11 @@ devtools::load_all()
 # save current version of the countries object for comparison
 countries_previous <- countries
 
+# GBD location hierarchies can not be downloaded without logging in
+# - download from the GHDx record page listed in `?get_gbd_direct`
+# - the GBD version is set in `data-raw/source_versions.R`
+gbd_path <- here::here("data-raw/gbd/IHME_GBD_2023_HIERARCHIES_Y2025M10D23.XLSX")
+
 # make a new `countries` object using xmart when possible
 countries_new_xmart <- make_countries(
   wb_use_xmart = TRUE,
@@ -18,6 +23,7 @@ countries_new_xmart <- make_countries(
   sdg_use_xmart = TRUE,
   include_undesa = TRUE,
   include_gbd = TRUE,
+  gbd_path = gbd_path,
   include_oecd = TRUE
 )
 
@@ -28,6 +34,7 @@ countries_new_direct <- make_countries(
   sdg_use_xmart = FALSE,
   include_undesa = TRUE,
   include_gbd = TRUE,
+  gbd_path = gbd_path,
   include_oecd = TRUE
 )
 
