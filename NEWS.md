@@ -1,3 +1,25 @@
+# whoville 0.2.0
+
+* Updated `countries` object, mostly from the WHO xMart REFMART tables:
+  * IDN WHO region changed from SEAR to WPR.
+  * World Bank income groups up to FY27 (`wb_ig_2021` to `wb_ig_2025`).
+  * GBD columns from the GBD 2023 location hierarchy.
+  * Name updates (e.g. Nauru is now 'Naoero').
+  * All changes are listed in `data-raw/countries_diff_against_v0.1.7.xlsx`.
+* `make_countries()` makes an updated `countries` object from the current
+  sources and logs the version of each input. All helper functions can use it
+  with the `whoville.option.countries` option or `countries_manual` argument.
+* `compare_countries()` saves the differences between two `countries` objects
+  to an xlsx file.
+* Breaking changes:
+  * Alternative and former name columns removed, so old names (e.g. "Turkey",
+    "Swaziland") no longer match exactly.
+  * `gbd_high_income` column removed, `is_gbd_high_income()` now uses the GBD
+    'High-income' region (same 36 countries).
+  * Column and row order of `countries` changed.
+* Bug fixes: `valid_codes()` ignored `type`, and exact name matching failed with
+  stringdist 0.9.17.
+
 # whoville 0.1.7
 
 * IHME's GBD codes and regional classifications added to allow conversion between ISO3 and GBD codes, as well as use of
