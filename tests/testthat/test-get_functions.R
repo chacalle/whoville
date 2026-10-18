@@ -18,7 +18,8 @@ test_that("`get_who_public_xmart` works", {
 test_that("`make_countries` works with 'xmart' args set to 'TRUE'", {
   testthat::skip_if_offline()
 
-  args <- formalArgs(make_countries)
+  # only the logical arguments (e.g. not `gbd_path`)
+  args <- names(Filter(is.logical, formals(make_countries)))
   args <- rep(TRUE, length(args)) %>%
     as.list() %>%
     setNames(args)
@@ -26,12 +27,18 @@ test_that("`make_countries` works with 'xmart' args set to 'TRUE'", {
   result <- do.call(make_countries, args)
 
   testthat::expect_true(nrow(result) > 0)
+
+  # all sources are included in the log of sources used
+  source_log <- attr(result, "source_log")
+  testthat::expect_named(source_log, c("data", "source", "version"))
+  testthat::expect_equal(nrow(source_log), 9)
 })
 
 test_that("`make_countries` works with 'xmart' args set to 'FALSE'", {
   testthat::skip_if_offline()
 
-  args <- formalArgs(make_countries)
+  # only the logical arguments (e.g. not `gbd_path`)
+  args <- names(Filter(is.logical, formals(make_countries)))
   args <- rep(FALSE, length(args)) %>%
     as.list() %>%
     setNames(args)
@@ -45,7 +52,8 @@ test_that("`make_countries` works with 'xmart' args set to 'FALSE'", {
 test_that("`make_countries` works with 'xmart' args set to 'TRUE' and 'include' arguments set to 'FALSE'", {
   testthat::skip_if_offline()
 
-  args <- formalArgs(make_countries)
+  # only the logical arguments (e.g. not `gbd_path`)
+  args <- names(Filter(is.logical, formals(make_countries)))
   args <- rep(TRUE, length(args)) %>%
     as.list() %>%
     setNames(args)

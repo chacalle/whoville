@@ -106,19 +106,6 @@ get_wb_ig_direct <- function(url = "https://ddh-openapi.worldbank.org/resources/
   wb_ig_years_available <- as.numeric(wb_ig_years_available)
   stopifnot(wb_ig_years_available[1] == 1987)
 
-  year_current <- Sys.Date() %>%
-    substr(1, 4) %>%
-    as.integer()
-  if (Sys.Date() > as.Date(paste0(year_current, "-06-01"))) {
-    wb_year_expected <- year_current - 1
-  } else {
-    wb_year_expected <- year_current - 2
-  }
-
-  if (!wb_year_expected %in% wb_ig_years_available) {
-    warning("Updated World Bank Income Group classifications should be available after July 1st of each year, check for a new link")
-  }
-
   wb_ig <- readxl::read_xlsx(
     path = temp,
     sheet = sheet,
@@ -225,6 +212,57 @@ format_wb_ig_xmart <- function(dat_raw) {
     dplyr::select("m49", dplyr::all_of(nms))
 
   return(dat_formatted)
+}
+
+#' @title Warn if the World Bank income groups do not include the latest
+#'   fiscal year
+#'
+#' @description
+#' The World Bank releases new income group classifications on July 1st of each
+#' year for the new fiscal year. The `wb_ig_{year}` columns are named by the
+#' year of the GNI data, two years before the fiscal year (e.g. FY27 is
+#' `wb_ig_2025`).
+#'
+#' @param wb_ig_years \[`numeric()`\]\cr
+#'   Years of the `wb_ig_{year}` columns available.
+#' @param source \[`character(1)`\]\cr
+#'   Where the income groups came from, used in the warning.
+#' @param date \[`Date(1)`\]\cr
+#'   Date used to determine the latest fiscal year expected. Default is today.
+warn_if_wb_ig_outdated <- function(wb_ig_years, source, date = Sys.Date()) {
+  year_current <- as.integer(format(date, "%Y"))
+  is_released_this_year <- date >= as.Date(paste0(year_current, "-07-01"))
+  if (is_released_this_year) {
+    wb_ig_year_expected <- year_current - 1
+  } else {
+    wb_ig_year_expected <- year_current - 2
+  }
+
+  wb_ig_year_latest <- max(wb_ig_years)
+  if (wb_ig_year_latest < wb_ig_year_expected) {
+    warning(
+      stringr::str_glue(
+        "The latest World Bank income groups from {source} are {wb_ig_fiscal_year(wb_ig_year_latest)} ('wb_ig_{wb_ig_year_latest}'), ",
+        "but {wb_ig_fiscal_year(wb_ig_year_expected)} ('wb_ig_{wb_ig_year_expected}') should be available since July 1st {wb_ig_year_expected + 1}. ",
+        "If using xMart it may not be updated yet, try `wb_use_xmart = FALSE`, otherwise check the World Bank download links in `get_wb_ig_direct()`."
+      ),
+      call. = FALSE
+    )
+  }
+  return(invisible(NULL))
+}
+
+#' @title World Bank fiscal year label for a `wb_ig_{year}` column year
+#'
+#' @param wb_ig_year \[`numeric(1)`\]\cr
+#'   Year of the `wb_ig_{year}` column.
+#'
+#' @examples
+#' \dontrun{
+#' wb_ig_fiscal_year(2025) # "FY27"
+#' }
+wb_ig_fiscal_year <- function(wb_ig_year) {
+  sprintf("FY%02d", (wb_ig_year + 2) %% 100)
 }
 
 #' @rdname wb

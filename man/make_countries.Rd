@@ -51,7 +51,8 @@ for when users are attempting to make their own updated object.}
 }
 \value{
 [\code{tibble()}] with the updated data for the \code{whoville::countries}
-object.
+object. The source and version of each input is printed as a message and
+stored in the 'source_log' attribute (\code{attr(countries_new, "source_log")}).
 }
 \description{
 Make the \code{whoville::countries} dataset

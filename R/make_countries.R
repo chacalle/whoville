@@ -42,7 +42,8 @@
 #' - Organisation for Economic Co-operation and Development (OECD) membership
 #'
 #' @returns \[`tibble()`\] with the updated data for the `whoville::countries`
-#' object.
+#' object. The source and version of each input is printed as a message and
+#' stored in the 'source_log' attribute (`attr(countries_new, "source_log")`).
 #'
 #' @examples
 #' \dontrun{
@@ -82,21 +83,32 @@ make_countries <- function(wb_use_xmart = TRUE,
       url = "https://xmart-api-public.who.int/REFMART/REF_GROUPS_FULL?$filter=GROUP_TYPE_CODE eq 'WB_INCOME'"
     ) %>%
       format_wb_ig_xmart()
+    source_wb_ig <- "WHO xMart REFMART 'REF_GROUPS_FULL'"
 
     dat_wb_reg <- dat_who_ref_groups_current %>%
       dplyr::filter(.data$GROUP_TYPE_CODE == "WB_REGION") %>%
       format_wb_reg_xmart()
+    source_wb_reg <- "WHO xMart REFMART 'REF_GROUPS_CURRENT'"
   } else {
     dat_wb_ig <- get_wb_ig_direct() %>%
       format_wb_ig_direct()
+    source_wb_ig <- "World Bank historical classification file"
+
     dat_wb_reg <- get_wb_reg_direct() %>%
       format_wb_reg_direct()
+    source_wb_reg <- "World Bank current classification file"
   }
+  wb_ig_years <- grep("^wb_ig_", names(dat_wb_ig), value = TRUE) %>%
+    stringr::str_remove("^wb_ig_") %>%
+    as.numeric()
+  warn_if_wb_ig_outdated(wb_ig_years, source = source_wb_ig)
 
   # get the unsd regions and special groups
   dat_unsd_m49 <- get_un_m49_direct() %>%
     format_un_m49_direct()
+  source_unsd_special <- "UNSD M49 overview webpage"
   if (unsd_special_use_xmart) {
+    source_unsd_special <- "WHO xMart REFMART 'REF_GROUPS_CURRENT'"
     dat_unsd_special <- format_unsd_special_xmart(
       dat_ref_groups_current =  dat_who_ref_groups_current,
       unsd_m49s = dat_unsd_m49
@@ -107,6 +119,11 @@ make_countries <- function(wb_use_xmart = TRUE,
   }
 
   # get the undesa and sdg regions
+  wpp_year <- source_versions %>%
+    dplyr::filter(stringr::str_detect(.data$source, "World Population Prospects")) %>%
+    dplyr::pull("version")
+  source_wpp <- "UN DESA WPP 'Locations (XLSX)' file"
+  source_sdg <- source_wpp
   if (include_undesa | !sdg_use_xmart) {
     dat_undesa_sdg <- get_undesa_sdg_direct() %>%
       format_undesa_sdg_direct()
@@ -117,6 +134,7 @@ make_countries <- function(wb_use_xmart = TRUE,
     }
   }
   if (sdg_use_xmart) {
+    source_sdg <- "WHO xMart REFMART 'REF_GROUPS_CURRENT'"
     dat_sdg <- format_sdg_xmart(dat_who_ref_groups_current) %>%
       dplyr::left_join(
         y = dat_who_ref_country %>%
@@ -135,22 +153,22 @@ make_countries <- function(wb_use_xmart = TRUE,
   }
 
   dat_gbd <- NULL
+  gbd_year <- source_versions %>%
+    dplyr::filter(stringr::str_detect(.data$source, "^IHME GBD")) %>%
+    dplyr::pull("version")
   if (include_gbd) {
-    gbd_year <- source_versions %>%
-      dplyr::filter(stringr::str_detect(.data$source, "^IHME GBD")) %>%
-      dplyr::pull("version")
-
     if (is.null(gbd_path)) {
       # recent GBD location hierarchies require logging in to download, so use
       # the gbd columns already in the built in `countries` object
-      message("Using GBD ", gbd_year, " location metadata from the built in `whoville::countries` object")
       warn_if_newer_gbd(gbd_year = gbd_year, url_ghdx = "https://ghdx.healthdata.org")
       dat_gbd <- whoville::countries %>%
         dplyr::filter(!is.na(.data$gbd_code)) %>%
         dplyr::select("iso3", dplyr::starts_with("gbd_"))
+      source_gbd <- "built in `whoville::countries` object"
     } else {
       dat_gbd <- get_gbd_direct(gbd_year = gbd_year, path = gbd_path) %>%
         format_gbd_direct()
+      source_gbd <- basename(gbd_path)
     }
   }
 
@@ -220,5 +238,45 @@ make_countries <- function(wb_use_xmart = TRUE,
   countries <- countries %>%
     dplyr::select(!!!rlang::syms(col_order))
 
+  # log the source and version of each input
+  # TODO: the sources and versions are hardcoded here (and WPP/GBD versions come
+  # from `source_versions`), so they can drift from the `get_*()` functions
+  # - instead each `get_*()` function could attach its source, url, version and
+  #   access date as an attribute, kept by `format_*()`, and collected here
+  access_date <- paste("accessed", Sys.Date())
+  wb_ig_year_latest <- max(wb_ig_years)
+  version_wb_ig <- paste0(wb_ig_fiscal_year(wb_ig_year_latest), " ('wb_ig_", wb_ig_year_latest, "'), ", access_date)
+  version_sdg <- ifelse(sdg_use_xmart, access_date, paste("WPP", wpp_year))
+
+  # fmt: skip
+  source_log <- dplyr::tribble(
+    ~data, ~source, ~version, ~is_included,
+    "WHO codes, names, membership and regions", "WHO xMart REFMART 'REF_COUNTRY'", access_date, TRUE,
+    "World Bank income groups", source_wb_ig, version_wb_ig, TRUE,
+    "World Bank regions", source_wb_reg, access_date, TRUE,
+    "UNSD names and regions", "UNSD M49 overview webpage", access_date, TRUE,
+    "UNSD special groups (LDC, LLDC, SIDS)", source_unsd_special, access_date, TRUE,
+    "SDG regions", source_sdg, version_sdg, TRUE,
+    "UN DESA regions", source_wpp, paste("WPP", wpp_year), include_undesa,
+    "GBD regions", if (include_gbd) source_gbd else NA_character_, paste("GBD", gbd_year), include_gbd,
+    "OECD membership", "OECD SDMX API", access_date, include_oecd
+  )
+  source_log <- source_log %>%
+    dplyr::filter(.data$is_included) %>%
+    dplyr::select(-"is_included")
+
+  message_source_log(source_log)
+  attr(countries, "source_log") <- source_log
+
   return(countries)
+}
+
+#' @title Print the source and version of each input used by `make_countries()`
+#'
+#' @param source_log \[`data.frame(1)`\]\cr
+#'   One row per input with the 'data', 'source' and 'version' columns.
+message_source_log <- function(source_log) {
+  log_lines <- stringr::str_glue_data(source_log, "- {data}: {source}, {version}")
+  message(paste(c("`make_countries()` sources:", log_lines), collapse = "\n"))
+  return(invisible(NULL))
 }

@@ -33,3 +33,14 @@ test_that("GBD high-income functions use the GBD 'High-income' region", {
     c(TRUE, FALSE, FALSE)
   )
 })
+
+test_that("World Bank income group check expects the new fiscal year after July 1st", {
+  # FY27 ('wb_ig_2025') is released on 2026-07-01
+  expect_warning(
+    warn_if_wb_ig_outdated(1987:2024, source = "test", date = as.Date("2026-10-18")),
+    "FY27"
+  )
+  expect_no_warning(warn_if_wb_ig_outdated(1987:2025, source = "test", date = as.Date("2026-10-18")))
+  expect_no_warning(warn_if_wb_ig_outdated(1987:2024, source = "test", date = as.Date("2026-06-30")))
+  expect_identical(wb_ig_fiscal_year(c(1998, 2025)), c("FY00", "FY27"))
+})
