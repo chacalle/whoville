@@ -83,7 +83,7 @@ wb_ig_years <- function(countries_manual = NULL) {
 get_wb_ig_direct <- function(url = "https://ddh-openapi.worldbank.org/resources/DR0095334/download",
                       sheet = "Country Analytical History",
                       skip_years = 5,
-                      skip_data = 10) {
+                      skip_data = 6) {
 
   check_string(url)
   check_string(sheet)
@@ -101,7 +101,8 @@ get_wb_ig_direct <- function(url = "https://ddh-openapi.worldbank.org/resources/
     n_max = 1
   ) %>%
     names()
-  wb_ig_years_available <- grep(pattern = "\\d+", x = wb_ig_years_available, value = TRUE)
+  # only keep the year columns, the first column name can be blank (e.g. '...1')
+  wb_ig_years_available <- grep(pattern = "^\\d{4}$", x = wb_ig_years_available, value = TRUE)
   wb_ig_years_available <- as.numeric(wb_ig_years_available)
   stopifnot(wb_ig_years_available[1] == 1987)
 
