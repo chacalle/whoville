@@ -1,5 +1,10 @@
 ---
-output: github_document
+output:
+  github_document:
+    # keep the line breaks from this file in README.md, instead of rewrapping at 72 characters
+    pandoc_args: ["--wrap=preserve"]
+    # keep straight quotes in README.md, instead of converting them to curly quotes
+    md_extensions: "-smart"
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -20,7 +25,7 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 The goal of whoville is to provide a package country reference data published by
-the World Health Organization, United Nations and World Bank easily accessible in R. 
+the World Health Organization, United Nations and World Bank easily accessible in R.
 At the moment, this is a reference dataset and set of functions to work with country
 codes and names, allowing easy conversion between names and codes as well as easy
 access to region codes, WHO member status, and other published country metadata.
@@ -43,11 +48,27 @@ Other functions encourage a tidy R workflow where ISO3 codes are used as the uni
 * `iso3_to_names()` takes in a vector of ISO3 codes and returns specified country names.
 * `is_who_member()` takes in a vector of ISO3 codes and checks if they are a WHO member state or not.
 * `is_oecd_member()` takes in a vector of ISO3 codes and checks if they are an OECD member state or not.
-* `is_gbd_high_income()` takes in a vector of ISO3 codes and checks if they are classified as high-income in the 2019 GBD from IHME.
+* `is_gbd_high_income()` takes in a vector of ISO3 codes and checks if they are in the 'High-income' GBD region from IHME.
+
+## Countries data frame
 
 All of these functions are built on top of the `countries` data frame also exported
 with the package and developed off of public datasets provided by the World Health
 Organization and United Nations. Details available through `?countries`.
+
+| Type | Data source | `countries` columns | Notes |
+|------|-------------|---------------------|-------|
+| Basic location codes and World Health Organization (WHO) location metadata | [WHO xMart REFMART 'REF_COUNTRY' table](https://extranet.who.int/xmart4/REFMART/data/REF_COUNTRY) | Codes: `iso3`, `iso2`, `iso_numeric`, `who_code`, `m49`, `sovereign_iso3`<br>WHO member status: `who_member`, `who_member_small`<br>WHO names: `who_short_name_{ln}`, `who_formal_name_{ln}`<br>WHO region: `who_region` | |
+| United Nations Statistics Division (UNSD) special groups and regions | [WHO xMart REFMART 'REF_GROUPS_CURRENT' table](https://extranet.who.int/xmart4/REFMART/data/REF_GROUPS_CURRENT)<br>[UNSD m49 overview page](https://unstats.un.org/unsd/methodology/m49/overview) | UNSD special groups: `un_ldc`, `un_lldc`, `un_sids`<br>UNSD location names: `un_name_{ln}`<br>UNSD regions: `un_region`, `un_region_name_{ln}`, `un_subregion`, `un_subregion_name_{ln}`, `un_intermediate_region`, `un_intermediate_region_name_{ln}` | The name and region columns should be switched to xMart if they become available. |
+| World Bank (WB) regions and income groups | [WHO xMart REFMART 'REF_GROUPS_CURRENT' table](https://extranet.who.int/xmart4/REFMART/data/REF_GROUPS_CURRENT)<br>[WHO xMart REFMART 'REF_GROUPS_FULL' table](https://extranet.who.int/xmart4/REFMART/data/REF_GROUPS_FULL) | WB regions: `wb_region`, `wb_region_name_en`<br>WB income groups: `wb_ig_1987`, ..., `wb_ig_2025` | Direct helper functions also enable use of the [published World Bank xlsx files](https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups). |
+| Sustainable Development Goals (SDG) | [WHO xMart REFMART 'REF_GROUPS_CURRENT' table](https://extranet.who.int/xmart4/REFMART/data/REF_GROUPS_CURRENT) | SDG regions: `sdg_region`, `sdg_region_name_en`, `sdg_subregion`, `sdg_subregion_name_en` | |
+| United Nations Department of Economic and Social Affairs (UN DESA) | [UN DESA World Population Prospects (WPP)](https://population.un.org/wpp/definition-of-regions) | UN DESA regions: `un_desa_region`, `un_desa_region_name_en`, `un_desa_subregion`, `un_desa_subregion_name_en` | These columns are included in the package version of `countries` but by default are not included in new calls to `make_countries`.<br>These columns could potentially be removed given:<br>- their infrequent requirement for aggregations<br>- the lack of a regular source (WPP is updated every 1-2 years)<br>- the almost perfect overlap between `un_intermediate_region_name_en` and `un_desa_region_name_en`. |
+| Institute for Health Metrics and Evaluation (IHME) Global Burden of Disease (GBD) | [GBD 2023 location hierarchy](https://ghdx.healthdata.org/record/gbd-2023-cause-rei-and-location-hierarchies) | Codes: `gbd_code`<br>GBD regions: `gbd_region`, `gbd_region_name_en`, `gbd_subregion`, `gbd_subregion_name_en` | These columns are included in the package version of `countries` but by default are not included in new calls to `make_countries`.<br>Recent GBD location hierarchies can only be downloaded after logging in to GHDx, so `make_countries(include_gbd = TRUE)` reuses the package version of these columns unless a downloaded hierarchy file is given with `gbd_path`. A warning is given if a more recent GBD version may be available. |
+| Organisation for Economic Co-operation and Development (OECD) | Existence in the [OECD data-explorer file](https://data-explorer.oecd.org/) for 'OECD consumer price index country weights' | OECD membership: `oecd_member` | These columns are included in the package version of `countries` but by default are not included in new calls to `make_countries` due to the lack of a great source. |
+
+`_{ln}`: Indicates that the location/region names are available in multiple
+languages including English (en), Russian (ru), French (fr), Spanish (es), Arabic (ar),
+and Chinese (zh).
 
 ## Installation
 
@@ -58,6 +79,32 @@ devtools::install_github("gpw13/whoville")
 ```
 
 ## Usage
+
+The whoville package and all helper functions are built around the `countries` data
+frame. Users can access the data frame with `whoville::countries`. The `countries`
+data frame includes metadata that was available at the time the package was built and
+may become out of date. Therefore it is recommended to create an updated version of the
+`countries` data frame and enable the package to use the updated version.
+
+``` r
+# create an updated version using the information currently available in the
+# relevant xMart4 tables and other online sources
+# NOTE: in production you may want to save this updated object and read it into subsequent steps in a pipeline to avoid repeated timely queries to data sources
+countries_updated <- whoville::make_countries()
+
+
+# There are thentwo ways to use this updated object:
+
+# 1) set the global option 'whoville.option.countries', which all helper functions look for.
+#   - the option only needs to get set once per R session
+options(whoville.option.countries = countries_updated)
+iso3_to_regions(iso3 = 'IDN', region = 'who_region')
+
+# 2) pass the object directly to helper functions.
+#   - this argument would need to be used in each function call so
+#     the 1st method (using R options) is recommended
+iso3_to_regions(iso3 = 'IDN', region = 'who_region', countries_manual = countries_updated)
+```
 
 ```{r child="vignettes/whoville-usage.Rmd"}
 ```
