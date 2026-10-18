@@ -125,7 +125,10 @@ name_matching <- function(name,
   col <- apply(scrs, 1, which.min)[[row]]
   fit <- df[row, col]
   fuzz_result <- countries_use[[type]][row]
-  if (min(scr_mins) != 0) {
+
+  # identical strings can have a distance slightly above 0 due to floating point error
+  is_exact_match <- min(scr_mins) < sqrt(.Machine$double.eps)
+  if (!is_exact_match) {
     if (fm == "no") {
       result <- NA_character_
     } else {
