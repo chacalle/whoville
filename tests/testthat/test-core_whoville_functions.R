@@ -21,3 +21,15 @@ test_that("countries argument options work", {
   expect_identical(result, "EMR")
 
 })
+
+test_that("GBD high-income functions use the GBD 'High-income' region", {
+  result <- gbd_high_income_states()
+  expect_length(result, 36)
+  expect_true("USA" %in% result)
+  expect_false("IND" %in% result)
+
+  expect_identical(
+    is_gbd_high_income(c("USA", "IND", "not a code")),
+    c(TRUE, FALSE, FALSE)
+  )
+})

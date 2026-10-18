@@ -127,8 +127,9 @@ oecd_member_states <- function(countries_manual = NULL) {
 #' Check GBD high-income classification status from ISO3 codes.
 #'
 #' `is_gbd_high_income()` takes in a vector of ISO3 codes and returns a logical vector
-#' on whether that country is classified as high-income in the 2019 Global Burden
-#' of Disease released by the Institute for Health Metrics and Evaluation.
+#' on whether that country is in the 'High-income' GBD region (`gbd_region_name_en`)
+#' of the Global Burden of Disease released by the Institute for Health Metrics
+#' and Evaluation.
 #'
 #' @inheritParams is_who_member
 #'
@@ -137,16 +138,16 @@ oecd_member_states <- function(countries_manual = NULL) {
 #' @export
 is_gbd_high_income <- function(iso3, countries_manual = NULL) {
   countries_use <- resolve_countries_arg(countries_manual)
-  check_cols_exists(countries_use, cols = c("iso3", "gbd_high_income"))
-  members <- countries_use[["gbd_high_income"]]
+  check_cols_exists(countries_use, cols = c("iso3", "gbd_region_name_en"))
+  members <- countries_use[["gbd_region_name_en"]] == "High-income"
   idx <- match(iso3, countries_use[["iso3"]])
   members[idx] %in% TRUE
 }
 
 #' Get ISO3 codes for GBD high-income states.
 #'
-#' `gbd_high_income_states()` returns ISO3 codes for states classified as high
-#' income in the 2019 Global Burden of Disease released by the Institute for
+#' `gbd_high_income_states()` returns ISO3 codes for states in the 'High-income'
+#' GBD region of the Global Burden of Disease released by the Institute for
 #' Health Metrics and Evaluation. Useful to expand data frames to explicitly
 #' include missing data for countries.
 #'
